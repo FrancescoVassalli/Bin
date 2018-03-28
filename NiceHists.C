@@ -22,7 +22,7 @@
 		return r * quadrature(e1/d1,e2/d2);
 	}
 	float errorDivide(float d1, float e1, float d2, float e2){
-		float r = *d1/d2;
+		float r = d1/d2;
 		return r * quadrature(e1/(d1),e2/d2);
 	}
 	void errorDivideArray(int n,float* values, float* errors, float divisor, float divisorError){
