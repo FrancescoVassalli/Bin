@@ -40,6 +40,22 @@
 			h++;
 		}
 	}
+	void makeMarkerNice(TGraph** h, int n){
+		for (int i = 1; i < n; ++i)
+		{
+			(*h)->SetMarkerStyle(styles[i-1]);
+			(*h)->SetMarkerColor(colors[i-1]);
+			h++;
+		}
+	}
+	void makeMarkerNice(TGraphErrors** h, int n){
+		for (int i = 1; i < n; ++i)
+		{
+			(*h)->SetMarkerStyle(styles[i-1]);
+			(*h)->SetMarkerColor(colors[i-1]);
+			h++;
+		}
+	}
 	void gNice(){
 		gStyle->SetOptStat(0);
 		gStyle->SetErrorX(0);
@@ -111,6 +127,17 @@
 		{
 			r[i++] = q.front();
 			q.pop();
+		}
+		return r;
+	}
+	/*inclusive*/
+	template<class T>
+	T* partialArray(T* a, int start, int end){
+		T *r = new T[end-start+1];
+		int count=0;
+		for (int i = start; i <= end; ++i)
+		{
+			r[count++]=a[i];
 		}
 		return r;
 	}
