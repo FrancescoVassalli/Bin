@@ -1,34 +1,62 @@
 #include "TLegend.h"
 #include "TH1F.h"
+#include <limits.h>
 
 	short colors[7]={kRed,kBlue,kGreen+2,kMagenta+3,kOrange+4,kCyan+1,kMagenta-7};
 	short styles[7]={kFullCircle,kOpenSquare,kFullTriangleUp,kFullDiamond,kFullCross,kFullStar,kOpenFourTrianglesX};
+	
+	template<class T>
+	T* zeroArray(int n,T* type){
+		T* r = new T[n];
+		for (int i = 0; i < n; ++i)
+		{
+			r[i] = 0;
+		}
+		return r;
+	}
 	void makeBins(float* bins, int min, int nBins, float width){
 		for(int i=0; i<=nBins;++i){
 			bins[i] = min + width*i;
 		}
 	}
-	double quadrature(double d1, double d2){
-		return TMath::Sqrt(d1*d1+d2*d2);
+	template<class T>
+	T quadrature(T d1, T d2){
+		return TMath::Sqrt((double)d1*d1+d2*d2);
 	}
-	void divideArray(int n, float* a, float d){
+	template<class T>
+	T* divideArray(int n, T* a, T d){
+		T* r =new T[n];
 		for (int i = 0; i < n; ++i)
 		{
-			a[i] /=d;
+			r[i] =a[i] /d;
+		}
+		return r;
+	}
+	template<class T>
+	void divideArray(int n, T* a, T* d){
+		for (int i = 0; i < n; ++i)
+		{
+			a[i] /=d[i];
 		}
 	}
-	double errorDivide(double d1, double e1, double d2, double e2){
-		double r = d1/d2;
+	template<class T>
+	T errorDivide(T d1, T e1, T d2, T e2){
+		T r = d1/d2;
 		return r * quadrature(e1/d1,e2/d2);
 	}
-	/*float errorDivide(float d1, float e1, float d2, float e2){
-		float r = d1/d2;
-		return r * quadrature(e1/(d1),e2/d2);
-	}*/
-	void errorDivideArray(int n,float* values, float* errors, float divisor, float divisorError){
+	template<class T>
+	void errorDivideArray(int n,T* values, T* errors, T divisor, T divisorError){
 		for (int i = 0; i < n; ++i)
 		{
 			errors[i] = errorDivide(values[i],errors[i],divisor,divisorError);
+		}
+		values=divideArray(n,values,divisor);
+	}
+	template<class T>
+	void errorDivideArray(int n,T* values, T* errors, T* divisor, T* divisorError){
+		for (int i = 0; i < n; ++i)
+		{
+			errors[i] = errorDivide(values[i],errors[i],divisor[i],divisorError[i]);
 		}
 		divideArray(n,values,divisor);
 	}
@@ -141,4 +169,26 @@
 		}
 		return r;
 	}
+	template<class T>
+	T* sqrtArray(int n, T* in){
+		T* t= new T[n];
+		for (int i = 0; i < n; ++i)
+		{
+			t[i] = TMath::Sqrt(in[i]);
+		}
+		return t;
+	}
+	template<class T>
+	T* sigmaNtoUncertainty(int SIZE, T* sigma, T* n, T* sigmaerror){
+		T *r = new T[SIZE];
+		T *r2 = new T[SIZE];
+		for (int i = 0; i < SIZE; ++i)
+		{
+			r[i]=sigma[i];
+			r2[i] = sigmaerror[i];
+		}
+		errorDivideArray(SIZE,r,r2,sqrtArray(SIZE,n),zeroArray(SIZE,n));
+		return r;
+	}
+
 	
