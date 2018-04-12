@@ -186,14 +186,31 @@
 		}
 		return r;
 	}
+	/*inclusive*/
+	template<class T>
+	queue<T> arrayToQueue(T* a, int start, int end){
+		queue<T> r;
+		while(start<=end){
+			r.push(a[start]);
+		}
+		return r;
+	}
+	template<class T>
+	queue<T> arrayToQueue(const int SIZE, T* a){
+		queue<T> r;
+		for(int i=0; i<SIZE;++i){
+			r.push(a[i]);
+		}
+		return r;
+	}
 	/** returns a 2-D array where each subarray is the parts of a broken down by the output of maxes and partial Array*/
 	template<class T>
-	queue<T*> maxBrokenArray(const int SIZE, T* a){
+	queue<queue<T>> maxBrokenArray(const int SIZE, T* a){
 		vector<int> *maxis = maxes(SIZE,a);
-		queue<T*> out;
+		queue<queue<T>> out;
 		for (int i = 0; i < maxis->size()-1; ++i)
 		{
-			out.push(partialArray(a,(*maxis)[i],(*maxis)[i+1]));
+			out.push(arrayToQueue(a,(*maxis)[i],(*maxis)[i+1]));
 		}
 		return out;
 	}
