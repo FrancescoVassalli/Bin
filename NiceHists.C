@@ -24,19 +24,19 @@
 		return TMath::Sqrt((double)d1*d1+d2*d2);
 	}
 	template<class T>
-	T* divideArray(int n, T* a, T d){
-		T* r =new T[n];
+	void divideArray(int n, T* a, T d){
 		for (int i = 0; i < n; ++i)
 		{
-			r[i] =a[i] /d;
+			a[i] /=d;
+			cout<<a[i]<<'\n';
 		}
-		return r;
 	}
 	template<class T>
 	void divideArray(int n, T* a, T* d){
 		for (int i = 0; i < n; ++i)
 		{
 			a[i] /=d[i];
+
 		}
 	}
 	template<class T>
@@ -50,7 +50,7 @@
 		{
 			errors[i] = errorDivide(values[i],errors[i],divisor,divisorError);
 		}
-		values=divideArray(n,values,divisor);
+		divideArray(n,values,divisor);
 	}
 	template<class T>
 	void errorDivideArray(int n,T* values, T* errors, T* divisor, T* divisorError){
@@ -180,15 +180,67 @@
 	}
 	template<class T>
 	T* sigmaNtoUncertainty(int SIZE, T* sigma, T* n, T* sigmaerror){
+		const float factor = 1.465; // the inverse of 0.6827 which is the percentage of the area under a gaussian when integrated over +- 1 sigma
 		T *r = new T[SIZE];
 		T *r2 = new T[SIZE];
 		for (int i = 0; i < SIZE; ++i)
 		{
-			r[i]=sigma[i];
+			r[i]= factor*sigma[i];
 			r2[i] = sigmaerror[i];
 		}
 		errorDivideArray(SIZE,r,r2,sqrtArray(SIZE,n),zeroArray(SIZE,n));
 		return r;
 	}
-
+template<class T>
+class Scalar
+{
+public:
+	Scalar(T value){
+		this->value=value;
+	}
+	Scalar(T value, T uncertainty){
+		this->value=value;
+		this->uncertainty=uncertainty;
+	}
+	~Scalar();
+	void operator+(Scalar<T> s){
+		this->value = this->value + s.value;
+		this->uncertainty = quadrature(this->uncertainty, s.uncertainty);
+	}
+	void operator+(T s){
+		this->value = this->value + s;
+	}
+	void operator-(Scalar<T> s){
+		this->value = this->value + s.value;
+		this->uncertainty = quadrature(this->uncertainty, s.uncertainty);
+	}
+	void operator-(T s){
+		this->value = this->value + s;
+	}
+	void operator=(Scalar<T> s){
+		this->value=s.value;
+		uncertainty=s.uncertainty;
+	}
+	bool operator==(Scalar<T> s){
+		return value==s.value;
+	}
+	void operator*(Scalar<T> s){
+		this->uncertainty = (value*s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
+		this->value *= s.value;
+	}
+	void operator*(T s){
+		this->value *= s;
+	}
+	void operator/(Scalar<T> s){
+		this->uncertainty = (value/s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
+		this->value /= s.value;
+	}
+	void operator/(T s){
+		this->value /= s;
+	}
+private:
+	T value;
+	T uncertainty;
 	
+};
+
