@@ -158,6 +158,23 @@
 		}
 		return r;
 	}
+	/*returns every index i in an array where the next value is less than the value at i always starts with 0 and ends with SIZE-1*/
+	template<class T>
+	vector<int>* maxes(const int SIZE, T* a){
+		vector<int> *maxes = new vector<int>(0);
+		maxes->push_back(0);
+		T temp;
+		temp = a[0];
+		for (int i = 1; i < SIZE; ++i)
+		{
+			if(a[i]>temp){
+				maxes->push_back(i);
+			}
+			temp=a[i];
+		}
+		maxes->push_back(SIZE-1);
+		return maxes;
+	}
 	/*inclusive*/
 	template<class T>
 	T* partialArray(T* a, int start, int end){
@@ -168,6 +185,17 @@
 			r[count++]=a[i];
 		}
 		return r;
+	}
+	/** returns a 2-D array where each subarray is the parts of a broken down by the output of maxes and partial Array*/
+	template<class T>
+	T** maxBrokenArray(const int SIZE, T* a){
+		vector<int> *maxis = maxes(SIZE,a);
+		T** out = new T*[maxis->size()+1];
+		for (int i = 0; i < maxis->size()-1; ++i)
+		{
+			out[i] = partialArray(a,(*maxis)[i],(*maxis)[i+1]);
+		}
+		return out;
 	}
 	template<class T>
 	T* sqrtArray(int n, T* in){
@@ -201,6 +229,7 @@
 				temp=x[i];
 			}
 		}
+		return temp;
 	}
 	template<class T>
 	T average(int SIZE, T* x){
@@ -212,9 +241,7 @@
 		return sum/SIZE;
 	}
 	float systematicError(const int SIZE, float* means, float* meanerror){ // by extreme - mean over sqrt(3)
-		float max = max(SIZE,means);
-		float average = average(SIZE, means);
-		return (max-average)/TMath::Sqrt(3);
+		return (max<float>(SIZE,means)-average<float>(SIZE,means))/TMath::Sqrt(3);
 	}
 template<class T>
 class Scalar
@@ -285,4 +312,9 @@ private:
 	T uncertainty;
 	
 };
-
+	/*template<class T>
+	Scalar<T> systematicError(const int SIZE, Scalar<T>* means){ // by extreme - mean over sqrt(3)
+		Scalar<T> max = max(SIZE,means);
+		Scalar<T> average = average(SIZE, means);
+		return (max-average)/TMath::Sqrt(3);
+	}*/
