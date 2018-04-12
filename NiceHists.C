@@ -28,7 +28,7 @@
 		for (int i = 0; i < n; ++i)
 		{
 			a[i] /=d;
-			cout<<a[i]<<'\n';
+			//cout<<a[i]<<'\n';
 		}
 	}
 	template<class T>
