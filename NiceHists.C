@@ -169,16 +169,18 @@
 		}
 		maxes->push_back(0);
 		T temp;
-		temp = a[1];
-		for (int i = 2; i < SIZE; ++i)
+		temp = a[0];
+		for (int i = 1; i < SIZE; ++i)
 		{
 			if(a[i]!=temp){
 				maxes->push_back(i);
 				temp=a[i];
+				//cout<<i<<endl;
 			}
 		}
-		if
-		maxes->push_back(SIZE-1);
+		if(maxes->back()!=SIZE-1){
+			maxes->push_back(SIZE-1);
+		}
 		return maxes;
 	}
 	/*inclusive*/
@@ -263,7 +265,18 @@
 	T max(queue<T> in){
 		T temp=0;
 		while(!in.empty()){
-			if(in.front()==temp){
+			if(in.front()>=temp){
+				temp=in.front();
+			}
+			in.pop();
+		}
+		return temp;
+	}
+	template<class T>
+	T min(queue<T> in){
+		T temp=-1;
+		while(!in.empty()){
+			if(in.front()<=temp||temp=-1){
 				temp=in.front();
 			}
 			in.pop();
@@ -289,9 +302,9 @@
 		}
 		return sum/SIZE;
 	}
-	float systematicError(const int SIZE, float* means){ // by extreme - mean over sqrt(3)
+	/*float systematicError(const int SIZE, float* means){ // by extreme - mean over sqrt(3)
 		return (max<float>(SIZE,means)-average<float>(SIZE,means))/TMath::Sqrt(3);
-	}
+	}*/
 	template<class T>
 	T systematicError(queue<T> means){ // by extreme - mean over sqrt(3)
 		if (means.size()<=2)
