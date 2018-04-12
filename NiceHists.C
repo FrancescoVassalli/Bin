@@ -158,20 +158,26 @@
 		}
 		return r;
 	}
-	/*returns every index i in an array where the next value is less than the value at i always starts with 0 and ends with SIZE-1*/
+	/*returns every index i in an array where the next value is unequal to the value at i always starts with 0 and ends with SIZE-1*/
 	template<class T>
-	vector<int>* maxes(const int SIZE, T* a){
+	vector<int>* sameValueIndices(const int SIZE, T* a){
 		vector<int> *maxes = new vector<int>(0);
+		if(SIZE<=1){
+			maxes->push_back(0);
+			maxes->push_back(0);
+			return maxes;
+		}
 		maxes->push_back(0);
 		T temp;
-		temp = a[0];
-		for (int i = 1; i < SIZE; ++i)
+		temp = a[1];
+		for (int i = 2; i < SIZE; ++i)
 		{
-			if(a[i]>temp){
+			if(a[i]!=temp){
 				maxes->push_back(i);
+				temp=a[i];
 			}
-			temp=a[i];
 		}
+		if
 		maxes->push_back(SIZE-1);
 		return maxes;
 	}
@@ -204,16 +210,21 @@
 		return r;
 	}
 	/** returns a 2-D array where each subarray is the parts of a broken down by the output of maxes and partial Array*/
-	template<class T>
+	/*template<class T>
 	queue<queue<T>> maxBrokenArray(const int SIZE, T* a){
 		vector<int> *maxis = maxes(SIZE,a);
+		for (unsigned int i = 0; i < maxis->size(); ++i)
+		{
+			cout<<maxis->at(i)<<'\n';
+		}
+		cout<<endl;
 		queue<queue<T>> out;
 		for (int i = 0; i < maxis->size()-1; ++i)
 		{
 			out.push(arrayToQueue(a,(*maxis)[i],(*maxis)[i+1]));
 		}
 		return out;
-	}
+	}*/
 	template<class T>
 	T* sqrtArray(int n, T* in){
 		T* t= new T[n];
