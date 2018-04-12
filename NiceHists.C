@@ -188,12 +188,12 @@
 	}
 	/** returns a 2-D array where each subarray is the parts of a broken down by the output of maxes and partial Array*/
 	template<class T>
-	T** maxBrokenArray(const int SIZE, T* a){
+	queue<T*> maxBrokenArray(const int SIZE, T* a){
 		vector<int> *maxis = maxes(SIZE,a);
-		T** out = new T*[maxis->size()+1];
+		queue<T*> out;
 		for (int i = 0; i < maxis->size()-1; ++i)
 		{
-			out[i] = partialArray(a,(*maxis)[i],(*maxis)[i+1]);
+			out.push(partialArray(a,(*maxis)[i],(*maxis)[i+1]));
 		}
 		return out;
 	}
