@@ -191,6 +191,31 @@
 		errorDivideArray(SIZE,r,r2,sqrtArray(SIZE,n),zeroArray(SIZE,n));
 		return r;
 	}
+	template<class T>
+	T max(int SIZE, T* x){
+		T temp=0;
+		for (int i = 0; i < SIZE; ++i)
+		{
+			if (x[i]>temp)
+			{
+				temp=x[i];
+			}
+		}
+	}
+	template<class T>
+	T average(int SIZE, T* x){
+		T sum=0;
+		for (int i = 0; i < SIZE; ++i)
+		{
+			sum+= x[i];
+		}
+		return sum/SIZE;
+	}
+	float systematicError(const int SIZE, float* means, float* meanerror){ // by extreme - mean over sqrt(3)
+		float max = max(SIZE,means);
+		float average = average(SIZE, means);
+		return (max-average)/TMath::Sqrt(3);
+	}
 template<class T>
 class Scalar
 {
@@ -202,41 +227,58 @@ public:
 		this->value=value;
 		this->uncertainty=uncertainty;
 	}
-	~Scalar();
-	void operator+(Scalar<T> s){
-		this->value = this->value + s.value;
-		this->uncertainty = quadrature(this->uncertainty, s.uncertainty);
+	~Scalar(); 
+	//operators might need to return class types but I'm not sure
+	Scalar<T> operator+(Scalar<T> s){
+		Scalar<T> next;
+		next.value = this->value + s.value;
+		next.uncertainty = quadrature(this->uncertainty, s.uncertainty);
+		return next;
 	}
-	void operator+(T s){
-		this->value = this->value + s;
+	Scalar<T> operator+(T s){
+		Scalar<T> next;
+		next.value = this->value + s;
+		return next;
 	}
-	void operator-(Scalar<T> s){
-		this->value = this->value + s.value;
-		this->uncertainty = quadrature(this->uncertainty, s.uncertainty);
+	Scalar<T> operator-(Scalar<T> s){
+		Scalar<T> next;
+		next.value = this->value - s.value;
+		next.uncertainty = quadrature(this->uncertainty, s.uncertainty);
+		return next;
 	}
-	void operator-(T s){
-		this->value = this->value + s;
+	Scalar<T> operator-(T s){
+		Scalar<T> next;
+		next.value = this->value - s;
+		return next;
 	}
 	void operator=(Scalar<T> s){
-		this->value=s.value;
+		value=s.value;
 		uncertainty=s.uncertainty;
 	}
 	bool operator==(Scalar<T> s){
 		return value==s.value;
 	}
-	void operator*(Scalar<T> s){
-		this->uncertainty = (value*s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
-		this->value *= s.value;
+	Scalar<T> operator*(Scalar<T> s){
+		Scalar<T> next;
+		next.uncertainty = (value*s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
+		next.value *= s.value;
+		return next;
 	}
-	void operator*(T s){
-		this->value *= s;
+	Scalar<T> operator*(T s){
+		Scalar<T> next;
+		next.value *= s;
+		return next;
 	}
-	void operator/(Scalar<T> s){
-		this->uncertainty = (value/s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
-		this->value /= s.value;
+	Scalar<T> operator/(Scalar<T> s){
+		Scalar<T> next;
+		next.uncertainty = (value/s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
+		next.value /= s.value;
+		return next;
 	}
-	void operator/(T s){
-		this->value /= s;
+	Scalar<T> operator/(T s){
+		Scalar<T> next;
+		next.value /= s;
+		return next;
 	}
 private:
 	T value;
