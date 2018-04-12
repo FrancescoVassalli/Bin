@@ -249,6 +249,17 @@
 		return temp;
 	}
 	template<class T>
+	T max(queue<T> in){
+		T temp=0;
+		while(!in.empty()){
+			if(in.front()==temp){
+				temp=in.front();
+			}
+			in.pop();
+		}
+		return temp;
+	}
+	template<class T>
 	T average(int SIZE, T* x){
 		T sum=0;
 		for (int i = 0; i < SIZE; ++i)
@@ -257,8 +268,26 @@
 		}
 		return sum/SIZE;
 	}
-	float systematicError(const int SIZE, float* means, float* meanerror){ // by extreme - mean over sqrt(3)
+	template<class T>
+	T average(queue<T> in){
+		T sum=0;
+		const int SIZE = in.size();
+		while(!in.empty()){
+			sum+=in.front();
+			in.pop();
+		}
+		return sum/SIZE;
+	}
+	float systematicError(const int SIZE, float* means){ // by extreme - mean over sqrt(3)
 		return (max<float>(SIZE,means)-average<float>(SIZE,means))/TMath::Sqrt(3);
+	}
+	template<class T>
+	T systematicError(queue<T> means){ // by extreme - mean over sqrt(3)
+		if (means.size()<=2)
+		{
+			return 0;
+		}
+		return (max<T>(means)-average<T>(means))/TMath::Sqrt(3);
 	}
 template<class T>
 class Scalar
