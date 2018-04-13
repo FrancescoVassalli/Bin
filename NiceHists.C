@@ -276,7 +276,7 @@
 	T min(queue<T> in){
 		T temp=-1;
 		while(!in.empty()){
-			if(in.front()<=temp||temp=-1){
+			if(in.front()<=temp||temp==-1){
 				temp=in.front();
 			}
 			in.pop();
@@ -311,8 +311,41 @@
 		{
 			return 0;
 		}
-		return (max<T>(means)-average<T>(means))/TMath::Sqrt(3);
+		T top = max<T>(means);
+		T bottom = min<T>(means);
+		T a = average<T>(means);
+		if (top-a>bottom-a)
+		{
+			return((top-a)/TMath::Sqrt(3));
+		}
+		else{
+			return ((bottom-a)/TMath::Sqrt(3));
+		}
 	}
+	void oleSwitcheroo(float* xp, float* yp)
+	{
+    	float temp = *xp;
+    	*xp = *yp;
+    	*yp = temp;
+	}
+	template<class T>
+	queue<queue<T>> breakArray(T* a, std::vector<int> breaks){
+		queue<queue<T>> r;
+		int breakcounter=0;
+		while(breaks.size()-breakcounter>1){
+			cout<<breaks.at(breakcounter)<<" and "<<breaks.at(breakcounter+1)<<endl;
+			queue<T> temp;
+			for (int i = breaks.at(breakcounter); i < breaks.at(breakcounter+1); ++i)
+			{
+				temp.push(a[i]);
+			}
+			r.push(temp);
+			breakcounter++;
+			cout<<r.back().front()<<'\n';
+		}
+		return r;
+	}
+
 template<class T>
 class Scalar
 {
