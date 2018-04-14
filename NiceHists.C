@@ -158,16 +158,15 @@
 		}
 		return r;
 	}
-	/*returns every index i in an array where the next value is unequal to the value at i always starts with 0 and ends with SIZE-1*/
+	/*returns every index i in an array where the i value is unequal to the value at i-1 always starts with 0 and ends with SIZE*/
 	template<class T>
 	vector<int>* sameValueIndices(const int SIZE, T* a){
 		vector<int> *maxes = new vector<int>(0);
+		maxes->push_back(0);
 		if(SIZE<=1){
-			maxes->push_back(0);
 			maxes->push_back(0);
 			return maxes;
 		}
-		maxes->push_back(0);
 		T temp;
 		temp = a[0];
 		for (int i = 1; i < SIZE; ++i)
@@ -178,9 +177,7 @@
 				//cout<<i<<endl;
 			}
 		}
-		if(maxes->back()!=SIZE-1){
-			maxes->push_back(SIZE-1);
-		}
+		maxes->push_back(SIZE);
 		return maxes;
 	}
 	/*inclusive*/
@@ -307,7 +304,7 @@
 	}*/
 	template<class T>
 	T systematicError(queue<T> means){ // by extreme - mean over sqrt(3)
-		if (means.size()<=2)
+		if (means.size()<2)
 		{
 			return 0;
 		}
@@ -329,19 +326,20 @@
     	*yp = temp;
 	}
 	template<class T>
-	queue<queue<T>> breakArray(T* a, std::vector<int> breaks){
+	queue<queue<T>> breakArray(const int SIZE, T* a, std::vector<int> breaks){
 		queue<queue<T>> r;
 		int breakcounter=0;
 		while(breaks.size()-breakcounter>1){
-			cout<<breaks.at(breakcounter)<<" and "<<breaks.at(breakcounter+1)<<endl;
+			//cout<<breaks.at(breakcounter)<<" and "<<breaks.at(breakcounter+1)<<endl;
 			queue<T> temp;
 			for (int i = breaks.at(breakcounter); i < breaks.at(breakcounter+1); ++i)
 			{
+				cout<<a[i]<<endl;
 				temp.push(a[i]);
 			}
 			r.push(temp);
 			breakcounter++;
-			cout<<r.back().front()<<'\n';
+			//cout<<r.back().front()<<'\n';
 		}
 		return r;
 	}
@@ -409,6 +407,18 @@ public:
 		Scalar<T> next;
 		next.value /= s;
 		return next;
+	}
+	Scalar<T> pow(double n){
+		Scalar<T> r;
+		if (n==0)
+		{
+			r.value=1;
+			r.uncertainty=0;
+			return r;
+		}
+		r.value = TMath::Pow((double)value,n);
+		r.uncertainty=(r.value*n*uncertainty/value);
+		return r;
 	}
 private:
 	T value;
