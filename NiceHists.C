@@ -180,6 +180,16 @@
 		maxes->push_back(SIZE);
 		return maxes;
 	}
+	/* pass a vector of the indices from an array you want*/
+	template<class T>
+	T* valuesAt(T* a,std::vector<int> v){
+		T* r = new T[v.size()];
+		for (int i = 0; i < v.size(); ++i)
+		{
+			r[i] = a[v[i]];
+		}
+		return r;
+	}
 	/*inclusive*/
 	template<class T>
 	T* partialArray(T* a, int start, int end){
@@ -188,6 +198,18 @@
 		for (int i = start; i <= end; ++i)
 		{
 			r[count++]=a[i];
+		}
+		return r;
+	}
+	template<class T>
+	queue<int> arrayNonZero(T* a, int SIZE){
+		queue<int> r;
+		for (int i = 0; i < SIZE; ++i)
+		{
+			if (a[i]!=0)
+			{
+				r.push(i);
+			}
 		}
 		return r;
 	}
@@ -303,7 +325,7 @@
 		return (max<float>(SIZE,means)-average<float>(SIZE,means))/TMath::Sqrt(3);
 	}*/
 	template<class T>
-	T systematicError(queue<T> means){ // by extreme - mean over sqrt(3)
+	T systematicError(queue<T> means){ // by extreme 
 		if (means.size()<2)
 		{
 			return 0;
@@ -326,7 +348,7 @@
     	*yp = temp;
 	}
 	template<class T>
-	queue<queue<T>> breakArray(const int SIZE, T* a, std::vector<int> breaks){
+	queue<queue<T>> breakArray(T* a, std::vector<int> breaks){
 		queue<queue<T>> r;
 		int breakcounter=0;
 		while(breaks.size()-breakcounter>1){
@@ -334,7 +356,7 @@
 			queue<T> temp;
 			for (int i = breaks.at(breakcounter); i < breaks.at(breakcounter+1); ++i)
 			{
-				cout<<a[i]<<endl;
+				//cout<<a[i]<<endl;
 				temp.push(a[i]);
 			}
 			r.push(temp);
@@ -342,6 +364,26 @@
 			//cout<<r.back().front()<<'\n';
 		}
 		return r;
+	}
+	template<class T>
+	T queueAverage(queue<T> q){
+		T r=0;
+		const unsigned int SIZE = q.size();
+		while(!q.empty()){
+			r+=q.front();
+			q.pop();
+		}
+		return r/SIZE;
+	}
+	template<class T>
+	queue<T> averageList(queue<queue<T>> q){
+		queue<T> r;
+		while(!q.empty()){
+			r.push(queueAverage(q.front()));
+			q.pop();
+		}
+		return r;
+
 	}
 
 template<class T>
@@ -416,7 +458,7 @@ public:
 			r.uncertainty=0;
 			return r;
 		}
-		r.value = TMath::Pow((double)value,n);
+		r.value = TMath::Power((double)value,n);
 		r.uncertainty=(r.value*n*uncertainty/value);
 		return r;
 	}
