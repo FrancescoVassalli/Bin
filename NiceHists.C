@@ -14,14 +14,61 @@
 		}
 		return r;
 	}
+	template<class T>
+	T* clone(T* a,int SIZE){
+		T* r = new T[SIZE];
+		for (int i = 0; i < SIZE; ++i)
+		{
+			r[i] = a[i];
+		}
+		return r;
+	}
+	/*template<class T>
+	queue<T> clone(queue<T> q){
+		queue<T> r;
+
+	}*/
 	void makeBins(float* bins, int min, int nBins, float width){
 		for(int i=0; i<=nBins;++i){
 			bins[i] = min + width*i;
 		}
 	}
 	template<class T>
+	void arrayMultiply(T *a, T* m,int SIZE){
+		for (int i = 0; i < SIZE; ++i)
+		{
+			a[i] = a[i]*m[i];
+		}
+	}
+	template<class T>
+	T sum(T *a, int SIZE){
+		T sum=0;
+		for (int i = 0; i < SIZE; ++i)
+		{
+			sum+=a[i];
+		}
+	}
+	template<class T>
+	T sum(queue<T> q){
+		//queue<T> q = clone(a);
+		T sum=0;
+		while(!q.empty()){
+			sum+=q.front();
+			q.pop();
+		}
+		return sum;
+	}
+	template<class T>
 	T quadrature(T d1, T d2){
 		return TMath::Sqrt((double)d1*d1+d2*d2);
+	}
+	template<class T>
+	T quadrature(T* a, int SIZE){
+		T* b = clone(a);
+		arrayMultiply(b,b,SIZE);
+		T r = sum(b,SIZE);
+		return TMath::Sqrt(r);
+
 	}
 	template<class T>
 	void divideArray(int n, T* a, T d){
@@ -43,6 +90,11 @@
 	T errorDivide(T d1, T e1, T d2, T e2){
 		T r = d1/d2;
 		return r * quadrature(e1/d1,e2/d2);
+	}
+	template<class T>
+	T errorDivide(T d1, T e1, int d2){
+		T r = d1/d2;
+		return r * e1/d1;
 	}
 	template<class T>
 	void errorDivideArray(int n,T* values, T* errors, T divisor, T divisorError){
@@ -202,6 +254,27 @@
 		return r;
 	}
 	template<class T>
+	T* combineArray(T* a, int s1, T* b,int s2){
+		T* r = new T[s1+s1];
+		for (int i = 0; i < s1; ++i)
+		{
+			r[i]=a[i];
+		}
+		for (int i = 0; i < s2; ++i)
+		{
+			r[i+s1] =b[i];
+		}
+		return r;
+	}
+	/*exludes index a and b*/
+	template<class T>
+	T* removeFromArray(T* in, int a, int b, int SIZE){
+		T *r1 = partialArray(in,0,a-1);
+		T *r2 = partialArray(in,b+1,SIZE-1);
+		T *rf = combineArray(r1,a,r2,SIZE-b);
+		return rf;
+	}
+	template<class T>
 	queue<int> arrayNonZero(T* a, int SIZE){
 		queue<int> r;
 		for (int i = 0; i < SIZE; ++i)
@@ -210,15 +283,6 @@
 			{
 				r.push(i);
 			}
-		}
-		return r;
-	}
-	template<class T>
-	T* clone(T* a,int SIZE){
-		T* r = new T[SIZE];
-		for (int i = 0; i < SIZE; ++i)
-		{
-			r[i] = a[i];
 		}
 		return r;
 	}
@@ -316,7 +380,7 @@
 		T sum=0;
 		for (int i = 0; i < SIZE; ++i)
 		{
-			sum+= x[i];
+			sum= sum +x[i];
 		}
 		return sum/SIZE;
 	}
@@ -325,9 +389,10 @@
 		T sum=0;
 		const int SIZE = in.size();
 		while(!in.empty()){
-			sum+=in.front();
+			sum= sum+in.front();
 			in.pop();
 		}
+		//cout<<sum<<"\n";
 		return sum/SIZE;
 	}
 	/*float systematicError(const int SIZE, float* means){ // by extreme - mean over sqrt(3)
@@ -375,92 +440,150 @@
 		return r;
 	}
 	template<class T>
-	T queueAverage(queue<T> q){
-		T r=0;
-		const unsigned int SIZE = q.size();
-		while(!q.empty()){
-			r+=q.front();
-			q.pop();
-		}
-		return r/SIZE;
-	}
-	template<class T>
 	queue<T> averageList(queue<queue<T>> q){
 		queue<T> r;
 		while(!q.empty()){
-			r.push(queueAverage(q.front()));
+			r.push(average(q.front()));
 			q.pop();
 		}
 		return r;
 
 	}
 
-template<class T>
+	/* note that SIZE will change to the size of the returned array*/
+	template<class T>
+	T* yAveragex(unsigned int* SIZE, T* y, T* x){
+		queue<queue<T>> broken = breakArray(y,*sameValueIndices(*SIZE,x));
+		queue<T> averages;
+		while(!broken.empty()){
+			averages.push(average(broken.front()));
+			broken.pop();
+		}
+		T* r= queueToArray(averages);
+		*SIZE = averages.size();
+		return r;
+	}
+	template<class T>
+	void averageYXPropogate(unsigned int* SIZE, T* y, T* x, T*dy){
+		queue<queue<T>> broken = breakArray(y,*sameValueIndices(*SIZE,x));
+		queue<queue<T>> brokenUncertain = breakArray(dy,*sameValueIndices(*SIZE,x));
+		queue<T> averages;
+		queue<T> uncertainty;
+		while(!broken.empty()){
+			int count  = broken.front().size();
+			T temp = sum(broken.front());
+			T uTemp = sum(brokenUncertain.front());
+			uTemp=errorDivide(temp,uTemp,count);
+			temp/=count;
+			averages.push(temp);
+			uncertainty.push(uTemp);
+			broken.pop();
+			brokenUncertain.pop();
+		}
+		y= queueToArray(averages);
+		dy= queueToArray(uncertainty);
+		*SIZE = averages.size();
+	}
+
+	template<class T>
+	T* uniqueSortedArrayValues(int SIZE, T* a){
+		std::vector<int> *diffs = sameValueIndices(SIZE,a);
+		T* r = new T[diffs->size()];
+		for(unsigned int i=0; i<diffs->size();i++){
+			r[i] = a[diffs->at(i)];
+		}
+		return r;
+	}
+	
+
 class Scalar
 {
 public:
-	Scalar(T value){
-		this->value=value;
+	Scalar(){
+		value=uncertainty=0;
 	}
-	Scalar(T value, T uncertainty){
+	Scalar(float value){
+		this->value=value;
+		uncertainty=0;
+	}
+	Scalar(float value, float uncertainty){
 		this->value=value;
 		this->uncertainty=uncertainty;
 	}
-	~Scalar(); 
+	~Scalar(){}; 
 	//operators might need to return class types but I'm not sure
-	Scalar<T> operator+(Scalar<T> s){
-		Scalar<T> next;
+	Scalar operator+(const Scalar &s){
+		//cout<<"Addition "<<value<<" + "<<s.value<<"\n";;
+		Scalar next = Scalar();
 		next.value = this->value + s.value;
 		next.uncertainty = quadrature(this->uncertainty, s.uncertainty);
 		return next;
 	}
-	Scalar<T> operator+(T s){
-		Scalar<T> next;
+	void operator+=(Scalar s){
+		value+=s.value;
+		uncertainty = quadrature(this->uncertainty, s.uncertainty);
+	}
+	void operator*=(Scalar s){
+		*this = *this * s;
+	}
+	void operator/=(Scalar s){
+		*this = *this / s;
+	}
+	void operator-=(Scalar s){
+		*this = *this - s;
+	}
+	Scalar operator+(float s){
+		Scalar next;
 		next.value = this->value + s;
 		return next;
 	}
-	Scalar<T> operator-(Scalar<T> s){
-		Scalar<T> next;
+	Scalar operator-(Scalar s){
+		Scalar next;
 		next.value = this->value - s.value;
 		next.uncertainty = quadrature(this->uncertainty, s.uncertainty);
 		return next;
 	}
-	Scalar<T> operator-(T s){
-		Scalar<T> next;
+	Scalar operator-(float s){
+		Scalar next;
 		next.value = this->value - s;
 		return next;
 	}
-	void operator=(Scalar<T> s){
+	void operator=(Scalar s){
 		value=s.value;
 		uncertainty=s.uncertainty;
 	}
-	bool operator==(Scalar<T> s){
+	bool operator==(Scalar s){
 		return value==s.value;
 	}
-	Scalar<T> operator*(Scalar<T> s){
-		Scalar<T> next;
+	bool operator!=(Scalar s){
+		return value!=s.value;
+	}
+	Scalar operator*(Scalar s){
+		Scalar next;
 		next.uncertainty = (value*s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
 		next.value *= s.value;
 		return next;
 	}
-	Scalar<T> operator*(T s){
-		Scalar<T> next;
+	Scalar operator*(float s){
+		Scalar next;
 		next.value *= s;
+		next.uncertainty = (value*s)*uncertainty/value;
 		return next;
 	}
-	Scalar<T> operator/(Scalar<T> s){
-		Scalar<T> next;
+	Scalar operator/(Scalar s){
+		Scalar next;
 		next.uncertainty = (value/s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
 		next.value /= s.value;
 		return next;
 	}
-	Scalar<T> operator/(T s){
-		Scalar<T> next;
+	Scalar operator/(float s){ //progate uncertainty
+		Scalar next;
+		next.uncertainty=(value/s)*uncertainty/value;
 		next.value /= s;
 		return next;
 	}
-	Scalar<T> pow(double n){
-		Scalar<T> r;
+	Scalar pow(double n){
+		Scalar r;
 		if (n==0)
 		{
 			r.value=1;
@@ -471,14 +594,97 @@ public:
 		r.uncertainty=(r.value*n*uncertainty/value);
 		return r;
 	}
-private:
-	T value;
-	T uncertainty;
+	Scalar log(float base){
+		Scalar r;
+		r.value = TMath::Log(value)/TMath::Log(base);
+		r.uncertainty = uncertainty/(value*TMath::Log(base));
+		return r;
+	}
+
+float value;
+float uncertainty;
 	
 };
-	/*template<class T>
-	Scalar<T> systematicError(const int SIZE, Scalar<T>* means){ // by extreme - mean over sqrt(3)
-		Scalar<T> max = max(SIZE,means);
-		Scalar<T> average = average(SIZE, means);
-		return (max-average)/TMath::Sqrt(3);
-	}*/
+
+struct Point
+{
+	Scalar x;
+	Scalar y;
+};
+
+queue<queue<Point>> groupPointsByX(Point* a,int *SIZE){
+	queue<queue<Point>> r;
+	queue<float> interest;
+	queue<Point> tempQ;
+	for (int i = 0; i < *SIZE; ++i)
+	{	
+		Scalar temp = a[i].x;
+		if (a[i].x==temp)
+		{
+			tempQ.push(a[i]);
+		}
+		else{
+			r.push(tempQ);
+			tempQ.clear();
+			tempQ.push(a[i]);
+			temp=a[i].x;
+		}
+	}
+	*SIZE = r.size();
+	return r;
+}
+
+Scalar* yArray(queue<Point> q){
+	Scalar *r = new Scalar[q.size()];
+	int count =0;
+	while (!q.empty())
+	{
+		r[count] = q.front().y;
+		q.pop();
+		count++;
+	}
+	return r;
+}
+Scalar* xArray(queue<Point> q){
+	Scalar *r = new Scalar[q.size()];
+	int count=0;
+	while (!q.empty())
+	{
+		r[count] = q.front().x;
+		q.pop();
+		count++;
+	}
+	return r;
+}
+Scalar* xArray(Point* ps, int SIZE){
+	Scalar *r = new Scalar[SIZE];
+	for (unsigned int i = 0; i < SIZE; ++i)
+	{
+		r[i] = ps[i].x;
+	}
+	return r;
+}
+Scalar* yArray(Point* ps, int SIZE){
+	Scalar *r = new Scalar[SIZE];
+	for (unsigned int i = 0; i < SIZE; ++i)
+	{
+		r[i] = ps[i].y;
+	}
+	return r;
+}
+float* valueArray(Scalar* a, int SIZE){
+	float *r = new float[SIZE];
+	for (unsigned int i = 0; i < SIZE; ++i)
+	{
+		r[i] = a[i].value;
+	}
+	return r;
+}
+float* uncertaintyArray(Scalar* a, int SIZE){
+	float *r = new float[SIZE];
+	for (unsigned int i = 0; i < SIZE; ++i)
+	{
+		r[i] = a[i].uncertainty;
+	}
+	return r;
+}
