@@ -213,6 +213,15 @@
 		}
 		return r;
 	}
+	template<class T>
+	T* clone(T* a,int SIZE){
+		T* r = new T[SIZE];
+		for (int i = 0; i < SIZE; ++i)
+		{
+			r[i] = a[i];
+		}
+		return r;
+	}
 	/*inclusive*/
 	template<class T>
 	queue<T> arrayToQueue(T* a, int start, int end){
