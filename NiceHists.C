@@ -24,8 +24,11 @@
 		return r;
 	}
 	/*template<class T>
-	queue<T> clone(queue<T> q){
+	queue<T> clone(queue<T> *q){
 		queue<T> r;
+		while(!q->empty()){
+			r.push(q->front());
+		}
 
 	}*/
 	void makeBins(float* bins, int min, int nBins, float width){
@@ -519,6 +522,12 @@ public:
 		next.uncertainty = quadrature(this->uncertainty, s.uncertainty);
 		return next;
 	}
+	Scalar operator/(const Scalar &s){
+		Scalar next = Scalar();
+		next.uncertainty = (value/s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
+		next.value = value/s.value;
+		return next;
+	}
 	void operator+=(Scalar s){
 		value+=s.value;
 		uncertainty = quadrature(this->uncertainty, s.uncertainty);
@@ -561,25 +570,19 @@ public:
 	Scalar operator*(Scalar s){
 		Scalar next;
 		next.uncertainty = (value*s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
-		next.value *= s.value;
+		next.value = value*s.value;
 		return next;
 	}
 	Scalar operator*(float s){
 		Scalar next;
-		next.value *= s;
+		next.value = value*s;
 		next.uncertainty = (value*s)*uncertainty/value;
-		return next;
-	}
-	Scalar operator/(Scalar s){
-		Scalar next;
-		next.uncertainty = (value/s.value)*quadrature(this->uncertainty/value, s.uncertainty/s.value);
-		next.value /= s.value;
 		return next;
 	}
 	Scalar operator/(float s){ //progate uncertainty
 		Scalar next;
 		next.uncertainty=(value/s)*uncertainty/value;
-		next.value /= s;
+		next.value = value/s;
 		return next;
 	}
 	Scalar pow(double n){
@@ -611,23 +614,33 @@ struct Point
 	Scalar x;
 	Scalar y;
 };
-
+//probably memory leaks 
 queue<queue<Point>> groupPointsByX(Point* a,int *SIZE){
 	queue<queue<Point>> r;
 	queue<float> interest;
+	cout<<"check"<<'\n';
+	for (int i = 0; i < *SIZE; ++i)
+	{
+		cout<<a[i].y.value<<'\n';
+	}
+	int groupCount=0;
+	cout<<"Grouping:"<<'\n';
+	Scalar temp = a[0].x;
 	queue<Point> tempQ;
 	for (int i = 0; i < *SIZE; ++i)
 	{	
-		Scalar temp = a[i].x;
+		cout<<"Group"<<groupCount<<'\n';
 		if (a[i].x==temp)
 		{
+			cout<<a[i].x.value<<": "<<a[i].y.value<<'\n';
 			tempQ.push(a[i]);
 		}
 		else{
 			r.push(tempQ);
-			tempQ.clear();
-			tempQ.push(a[i]);
+			tempQ=queue<Point>();
 			temp=a[i].x;
+			i-=1;
+			groupCount++;
 		}
 	}
 	*SIZE = r.size();
