@@ -501,6 +501,15 @@
 			return ((bottom-a)/TMath::Sqrt(3));
 		}
 	}
+	template<class T>
+	queue<T> groupSystematic(queue<queue<T>> groups){
+		queue<T> out;
+		while(!groups.empty()){
+			out.push(systematicError(groups.front()));
+			groups.pop();
+		}
+		return out;
+	}
 	void oleSwitcheroo(float* xp, float* yp)
 	{
     	float temp = *xp;
@@ -647,6 +656,18 @@ public:
 	bool operator==(Scalar s){
 		return value==s.value;
 	}
+	bool operator>(Scalar s){
+		return value>s.value;
+	}
+	bool operator<(Scalar s){
+		return value<s.value;
+	}
+	bool operator>=(Scalar s){
+		return value>=s.value;
+	}
+	bool operator<=(Scalar s){
+		return value<=s.value;
+	}
 	bool operator!=(Scalar s){
 		return value!=s.value;
 	}
@@ -768,6 +789,22 @@ Scalar* yArray(Point* ps, int SIZE){
 		r[i] = ps[i].y;
 	}
 	return r;
+}
+queue<Scalar> yQueue(queue<Point> in){
+	queue<Scalar> out;
+	while(!in.empty()){
+		out.push(in.front().y);
+		in.pop();
+	}
+	return out;
+}
+queue<Scalar> xQueue(queue<Point> in){
+	queue<Scalar> out;
+	while(!in.empty()){
+		out.push(in.front().x);
+		in.pop();
+	}
+	return out;
 }
 float* valueArray(Scalar* a, int SIZE){
 	float *r = new float[SIZE];
