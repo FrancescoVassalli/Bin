@@ -271,11 +271,27 @@
 	}
 	/*exludes index a and b*/
 	template<class T>
-	T* removeFromArray(T* in, int a, int b, int SIZE){
+	T* removeIndex(T* in, int a, int b, int *SIZE){
 		T *r1 = partialArray(in,0,a-1);
-		T *r2 = partialArray(in,b+1,SIZE-1);
-		T *rf = combineArray(r1,a,r2,SIZE-b);
+		T *r2 = partialArray(in,b+1,*SIZE-1);
+		T *rf = combineArray(r1,a,r2,*SIZE-b);
+		*SIZE = *SIZE-(b-a)-1;
 		return rf;
+	}
+	/*exludes index a and b*/
+	template<class T>
+	queue<T> removeIndex(queue<T> in, int a, int b){
+		queue<T> r;
+		int count=0;
+		while(!in.empty()){
+			if (count<a&&count>b)
+			{
+				r.push(in.front());
+			}
+			in.pop();
+			count++;
+		}
+		return r;
 	}
 	template<class T>
 	queue<int> arrayNonZero(T* a, int SIZE){
@@ -618,21 +634,21 @@ struct Point
 queue<queue<Point>> groupPointsByX(Point* a,int *SIZE){
 	queue<queue<Point>> r;
 	queue<float> interest;
-	cout<<"check"<<'\n';
+	/*cout<<"check"<<'\n';
 	for (int i = 0; i < *SIZE; ++i)
 	{
 		cout<<a[i].y.value<<'\n';
-	}
+	}*/
 	int groupCount=0;
-	cout<<"Grouping:"<<'\n';
+	//cout<<"Grouping:"<<'\n';
 	Scalar temp = a[0].x;
 	queue<Point> tempQ;
 	for (int i = 0; i < *SIZE; ++i)
 	{	
-		cout<<"Group"<<groupCount<<'\n';
+		//cout<<"Group"<<groupCount<<'\n';
 		if (a[i].x==temp)
 		{
-			cout<<a[i].x.value<<": "<<a[i].y.value<<'\n';
+			//cout<<a[i].x.value<<": "<<a[i].y.value<<'\n';
 			tempQ.push(a[i]);
 		}
 		else{
@@ -643,6 +659,7 @@ queue<queue<Point>> groupPointsByX(Point* a,int *SIZE){
 			groupCount++;
 		}
 	}
+	r.push(tempQ);
 	*SIZE = r.size();
 	return r;
 }
