@@ -278,20 +278,87 @@
 		*SIZE = *SIZE-(b-a)-1;
 		return rf;
 	}
+	template<class T>
+	queue<T> vectorToQ(std::vector<T> v){
+		queue<T> r;
+		for (typename std::vector<T>::iterator i = v.begin(); i != v.end(); ++i)
+		{
+			r.push(*i);
+		}
+		return r;
+	}
 	/*exludes index a and b*/
 	template<class T>
 	queue<T> removeIndex(queue<T> in, int a, int b){
-		queue<T> r;
-		int count=0;
-		while(!in.empty()){
-			if (count<a&&count>b)
+		std::vector<T> v = queueToVector(in);
+		int count =0;
+		for (typename std::vector<T>::iterator i = v.begin(); i != v.end(); ++i)
+		{
+			if (count>=a&&count<=b)
 			{
-				r.push(in.front());
+				v.erase(i);
 			}
-			in.pop();
 			count++;
 		}
+		queue<T> r = vectorToQ(v);
 		return r;
+	}
+	/*template<class T>
+	void removeIndex(queue<queue<T>> *in, int a, int b){
+		queue<queue<T>> *r = new queue<queue<T>>;
+		int count=0;
+		while(!in->empty()){
+			if (count<a&&count>b)
+			{
+				r->push(in->front());			
+			}
+			in->pop();
+			count++;
+		}
+		delete in;
+		in=r;
+	}*/
+	template<class T>
+	std::vector<T> queueToVector(queue<T> q){
+		std::vector<T> v;
+		while(!q.empty()){
+			v.push_back(q.front());
+			q.pop();
+		}
+		return v;
+	}
+	/* queues a-b inclusive are put into queue a and the other queues are removed */
+	template<class T>
+	queue<queue<T>> mergeQueues(queue<queue<T>> in, int a, int b){
+		std::vector<queue<T>> v = queueToVector(in);
+		queue<queue<T>> out;
+		int count=0;
+		queue<T> place = v.at(a);
+		for (typename std::vector<queue<T>>::iterator i = v.begin(); i != v.end(); ++i)
+		{
+			if (count<a||count>b)
+			{
+				//cout<<"normal push"<<'\n';
+				out.push(*i);
+			}
+			else{
+				if (count!=a)
+				{
+					//cout<<"place push"<<'\n';
+					while(!i->empty()){
+							place.push(i->front());
+							i->pop();
+						}
+					if (count==b)
+					{
+						//cout<<"final push"<<'\n';
+						out.push(place);
+					}
+				}
+			}
+			count++;
+		}
+		return out;
 	}
 	template<class T>
 	queue<int> arrayNonZero(T* a, int SIZE){
