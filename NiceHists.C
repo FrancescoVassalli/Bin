@@ -1,9 +1,11 @@
 #include "TLegend.h"
 #include "TH1F.h"
 #include <limits.h>
+#include <queue>
+#include <iostream>
 
 	short colors[7]={kRed,kBlue,kGreen+2,kMagenta+3,kOrange+4,kCyan+1,kMagenta-7};
-	short styles[7]={kFullCircle,kOpenSquare,kFullTriangleUp,kFullDiamond,kFullCross,kFullStar,kOpenFourTrianglesX};
+	short styles[7]={kFullCircle,kOpenSquare,kFullTriangleUp,kFullDiamond,kFullCross,kFullStar,kOpenCircle};
 	
 	template<class T>
 	T* zeroArray(int n,T* type){
@@ -150,6 +152,11 @@
 			h++;
 		}
 	}
+	void makeDifferent(TH1F* h, int i){
+		h->SetLineColor(colors[i]);
+		h->SetMarkerStyle(styles[i]);
+		h->SetMarkerColor(colors[i]);
+	}
 	void makeLegendPoint(TLegend* tl, TH1F** h, int n, std::string *titles){
 		for (int i = 0; i < n; ++i)
 		{
@@ -181,9 +188,18 @@
 		h->GetYaxis()->SetTitleSize(s);
 		h->GetXaxis()->SetTitleSize(s);
 	}
+	void axisTitleSize(TH2F* h,float s){
+		h->GetYaxis()->SetTitleSize(s);
+		h->GetXaxis()->SetTitleSize(s);
+	}
 	void axisLabelSize(TH1F* h,float s){
 		h->GetYaxis()->SetLabelSize(s);
 		h->GetXaxis()->SetLabelSize(s);
+	}
+	template<class T>
+	void axisTitleOffset(T* h, float s){
+		h->GetYaxis()->SetTitleOffset(s);
+		h->GetXaxis()->SetTitleOffset(s);
 	}
 	void myMarkerText(Double_t x,Double_t y,Int_t color,Int_t mstyle, const char *text,Float_t msize,Double_t tsize)
 	{
@@ -593,6 +609,15 @@
 		}
 		return r;
 	}
+	template<class T>
+	queue<T> fillQueue(T in, const int SIZE){
+		queue<T> out;
+		for (int i = 0; i < SIZE; ++i)
+		{
+			out.push(in);
+		}
+		return out;
+	}
 	
 
 class Scalar
@@ -693,7 +718,7 @@ public:
 		Scalar next;
 		next.value = value*s;
 		next.uncertainty = (value*s)*uncertainty/value;
-		if (value==0||s.value==0)
+		if (value==0||s==0)
 		{
 			next.uncertainty=0;
 		}
