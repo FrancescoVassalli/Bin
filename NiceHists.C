@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <queue>
 #include <iostream>
+class Scalar;
 
 	short colors[7]={kRed,kBlue,kGreen+2,kMagenta+3,kOrange+4,kCyan+1,kMagenta-7};
 	short styles[7]={kFullCircle,kOpenSquare,kFullTriangleUp,kFullDiamond,kFullCross,kFullStar,kOpenCircle};
@@ -157,6 +158,29 @@
 		h->SetMarkerStyle(styles[i]);
 		h->SetMarkerColor(colors[i]);
 	}
+	void makeDifferent(TEfficiency* h, int i){
+		h->SetLineColor(colors[i]);
+		h->SetMarkerStyle(styles[i]);
+		h->SetMarkerColor(colors[i]);
+	}
+	void makeDifferent(queue<TH1F*> hQ){
+		int i=0;
+		while(!hQ.empty()){
+			hQ.front()->SetLineColor(colors[i]);
+			hQ.front()->SetMarkerStyle(styles[i]);
+			hQ.front()->SetMarkerColor(colors[i]);
+			hQ.pop();
+			i++;
+		}
+	}
+	void makeDifferent(TH1F** h, int SIZE){
+		for (int i = 0; i < SIZE; ++i)
+		{
+			h[i]->SetLineColor(colors[i]);
+			h[i]->SetMarkerStyle(styles[i]);
+			h[i]->SetMarkerColor(colors[i]);
+		}
+	}
 	void makeLegendPoint(TLegend* tl, TH1F** h, int n, std::string *titles){
 		for (int i = 0; i < n; ++i)
 		{
@@ -177,6 +201,10 @@
 		h->GetXaxis()->SetTitle(x.c_str());
 	}
 	void axisTitles(TGraph* h,std::string x, std::string y){
+		h->GetYaxis()->SetTitle(y.c_str());
+		h->GetXaxis()->SetTitle(x.c_str());
+	}
+	void axisTitles(THStack* h,std::string x, std::string y){
 		h->GetYaxis()->SetTitle(y.c_str());
 		h->GetXaxis()->SetTitle(x.c_str());
 	}
@@ -221,6 +249,72 @@
 	void doubleZero(TH1F *h, float y, float x){
 		h->GetYaxis()->SetRangeUser(0,y);
 		h->GetXaxis()->SetRangeUser(0,x);
+	}
+	void printHist(TH1F *h){
+		cout<<h->GetName()<<":\n";
+		for (int i = 0; i < h->GetNbinsX(); ++i)
+		{
+			cout<<"Bin"<<i<<":"<<h->GetBinContent(i)<<'\n';
+		}
+	}
+	inline string getNextPlotName(int* plotcount){
+		string r= "plot"+to_string(*plotcount);
+		*plotcount = *plotcount+1;
+		return r;
+	}
+	void normalizeTotal(TH1F** hlist,int SIZE){
+		float sum=0;
+		for (int i = 0; i < SIZE; ++i)
+		{
+			sum+=hlist[i]->Integral();
+		}
+		for (int i = 0; i < SIZE; ++i)
+		{
+			hlist[i]->Scale(1/sum);
+		}
+	}
+	void normalizeBins(TH1F** hlist, int SIZE){ // note that this does not propagate the error
+		for (int i = 1; i <= hlist[0]->GetNbinsX(); ++i)
+		{
+			double sum=0;
+			for (int j = 0; j < SIZE; ++j)
+			{
+				sum+=hlist[j]->GetBinContent(i);
+			}
+			if(sum==0)continue;
+			//cout<<"Sum"<<i<<":"<<sum<<'\n';
+			for (int j = 0; j < SIZE; ++j)
+			{
+				hlist[j]->SetBinContent(i,hlist[j]->GetBinContent(i)/sum);
+			}
+		}
+	}
+	THStack* getStack(TH1F** hlist, int SIZE){
+		string thisName = string(hlist[0]->GetName())+"Stack";
+		THStack *r = new THStack(thisName.c_str(),hlist[0]->GetTitle());
+		for (int i = 0; i < SIZE; ++i)
+		{
+			r->Add(hlist[i],"");
+		}
+		return r;
+	}
+	THStack* getStack(TH1F** hlist, int SIZE,string options){
+		string thisName = string(hlist[0]->GetName())+"Stack";
+		THStack *r = new THStack(thisName.c_str(),hlist[0]->GetTitle());
+		for (int i = 0; i < SIZE; ++i)
+		{
+			r->Add(hlist[i],options.c_str());
+		}
+		return r;
+	}
+	THStack* getStack(TH1F** hlist, int SIZE,string options,string xTitle, string yTitle){ //must be drawn before it can be editted
+		string thisName = string(hlist[0]->GetName())+"Stack";
+		THStack *r = new THStack(thisName.c_str(),hlist[0]->GetTitle());
+		for (int i = 0; i < SIZE; ++i)
+		{
+			r->Add(hlist[i],options.c_str());
+		}
+		return r;
 	}
 	template<class T>
 	T* queueToArray(queue<T> q){
@@ -530,9 +624,10 @@
 		}
 		return out;
 	}
-	void oleSwitcheroo(float* xp, float* yp)
+	template<class T>
+	void oleSwitcheroo(T* xp, T* yp)
 	{
-    	float temp = *xp;
+    	T temp = *xp;
     	*xp = *yp;
     	*yp = temp;
 	}
@@ -619,7 +714,8 @@
 		return out;
 	}
 	
-
+#ifndef Scalar_h
+#define Scalar_h
 class Scalar
 {
 public:
@@ -633,6 +729,10 @@ public:
 	Scalar(float value, float uncertainty){
 		this->value=value;
 		this->uncertainty=uncertainty;
+	}
+	Scalar(const Scalar &s){
+		this->value=s.value;
+		uncertainty=s.uncertainty;
 	}
 	~Scalar(){}; 
 	//operators might need to return class types but I'm not sure
@@ -688,6 +788,9 @@ public:
 	}
 	bool operator==(Scalar s){
 		return value==s.value;
+	}
+	bool operator==(float s){
+		return value==s;
 	}
 	bool operator>(Scalar s){
 		return value>s.value;
@@ -752,16 +855,32 @@ public:
 		r.uncertainty = uncertainty/(value*TMath::Log(base));
 		return r;
 	}
-
-	friend ostream& operator<<(ostream& os, Scalar const & tc) {
-        return os <<"Scalar: " << tc.value <<char(241)<<tc.uncertainty<<'\n';
+	operator float(){return value;}
+	operator double(){return (double) value;}
+	friend std::ostream& operator<<(std::ostream& os, Scalar const & tc) {
+       return os <<"Scalar:" << tc.value <<char(241)<<tc.uncertainty<<'\n';
     }
 
-float value;
-float uncertainty;
+	float value;
+	float uncertainty;
+protected:
+	template<class T>
+T quadrature(T d1, T d2){
+	return TMath::Sqrt((double)d1*d1+d2*d2);
+}
+
+template<class T>
+T quadrature(T* a, int SIZE){
+	T* b = clone(a);
+	arrayMultiply(b,b,SIZE);
+	T r = sum(b,SIZE);
+	return TMath::Sqrt(r);
+}
 	
 };
-
+#endif
+#ifndef ScalarAsymmetric_h
+#define ScalarAsymmetric_h
 class ScalarAsymmetric : public Scalar
 {
 public:
@@ -972,12 +1091,15 @@ float uncertaintyUp;
 float uncertaintyDown;
 	
 };
-
+#endif
+#ifndef Point_h
+#define Point_h
 struct Point
 {
 	Scalar x;
 	Scalar y;
 };
+#endif
 
 template<class T>
 struct Pair
@@ -1090,3 +1212,238 @@ float* uncertaintyArray(Scalar* a, int SIZE){
 	}
 	return r;
 }
+
+#ifndef Jet_h
+#define Jet_h
+class Jet
+{
+public:
+	Jet(){
+		pT=0;
+		energy=0;
+	}
+	Jet(float _pT, float _phi, float _y, float _r){
+		this->pT =Scalar(_pT);
+		this->phi = Scalar(_phi);
+		this->y = Scalar(_y);
+		this->r = Scalar(_r);
+	}
+	Jet(double _pT, double _phi, double _y){
+		pT=Scalar(_pT);
+		phi=Scalar(_phi);
+		y=Scalar(_y);
+		r=0;
+	}
+	Jet(float _pT, float _phi, float _y, float _r, float pz){ // calculate eta
+		this->pT =Scalar(_pT);
+		this->phi = Scalar(_phi);
+		this->y = Scalar(_y);
+		this->r = Scalar(_r);
+		eta= Scalar(calculateEta(_pT,pz));
+	}
+	Jet(float _pT, float _phi, float _y, float _r, float pz, float mass){ // calculate eta and e
+		this->pT =Scalar(_pT);
+		this->phi = Scalar(_phi);
+		this->y = Scalar(_y);
+		this->r = Scalar(_r);
+		this->mass = Scalar(mass);
+		energy = Scalar(calculateEnergy(pz));
+		eta= Scalar(calculateEta(_pT,pz));
+	}
+	Jet(float _pT, float _phi, float _y, float _r, float pz, float mass,float energy){ // calculate eta and e
+		this->pT =Scalar(_pT);
+		this->phi = Scalar(_phi);
+		this->y = Scalar(_y);
+		this->r = Scalar(_r);
+		this->mass = Scalar(mass);
+		this->energy = Scalar(energy);
+		eta= Scalar(calculateEta(_pT,pz));
+	}
+	~Jet(){	}
+	void setMult(int m){
+		mult=m;
+	}
+	Parton setParton(Parton p1, Parton p2){  
+		if (deltaR(p1)<deltaR(p2))//comparision
+		{
+			parton=p1;	
+		}
+		else{
+			parton=p2;
+		}
+		return parton;
+	}
+	inline float deltaPhi(float in){
+		float r = TMath::Abs(in-phi.value);
+		if (r>TMath::Pi())
+		{
+			r= 2*TMath::Pi()-r;
+		}
+		return r;
+	}
+	void setParton(Parton p){
+		parton=p;
+	}
+	bool isJetQuark(){
+		return parton.getQuark();
+	}
+	int getmult(){
+		return mult;
+	}
+	Scalar getpT(){
+		return pT;
+	}
+	Scalar getphi(){
+		return phi;
+	}
+	Scalar gety(){
+		return y;
+	}
+	Scalar getr(){
+		return r;
+	}
+	Scalar getEnergy(){
+		return energy;
+	}
+	Scalar operator/(float s){ 
+		return pT/s;
+	}
+	Scalar operator/(Jet s){ 
+		return pT/s.getpT();
+	}
+	bool operator==(Jet s){
+		return pT==s.pT&&phi==s.getphi();
+	}
+	bool operator>(Jet s){
+		return pT>s.getpT();
+	}
+	bool operator<(Jet s){
+		return pT<s.getpT();
+	}
+	bool operator>=(Jet s){
+		return pT>=s.getpT();
+	}
+	bool operator<=(Jet s){
+		return pT<=s.getpT();
+	}
+	bool operator!=(Jet s){
+		return pT!=s.getpT();
+	}
+private:
+	Scalar pT=-1;
+	Scalar phi =7;
+	Scalar y=0;
+	Scalar r=-1;
+	Scalar eta;
+	int mult=0;
+	Scalar mass;
+	Scalar energy;
+	Parton parton;
+
+	float deltaR(Parton p){
+	  return TMath::Power((TMath::Power(TMath::Abs(p.geteta()-eta.value),2)+TMath::Power(TMath::Abs(p.getphi()-phi.value),2)),.5);
+	}
+	float calculateEta(float pt, float pz){
+		return .5* TMath::Log((TMath::Power(pt*pt+pz*pz,.5)+pt))/((TMath::Power(pt*pt+pz*pz,.5)-pt));
+	}
+	float calculateEnergy(float pz){
+		return TMath::Power((pT.value)*(pT.value)+pz*pz+mass.value*mass.value,.5);
+	}
+	
+};
+
+#ifndef DiJet_h
+#define DiJet_h
+class DiJet
+{
+public:
+	DiJet(Jet j1, Jet j2){
+		leading = bigger(j1,j2);
+		subleading=smaller(j1,j2);
+		calculateR2J2();
+	}
+	DiJet(Jet j1, Jet j2,bool t){ //for sorted jets 
+		if (t)
+		{
+			isDijet=true;
+			leading=j1;
+			subleading=j2;
+		}
+		else{
+			leading = bigger(j1,j2);
+			subleading=smaller(j1,j2);
+		}
+		calculateR2J2();
+	}
+	DiJet(double pt1, double phi1, double pt2,double phi2){
+		if (pt1>pt2)
+		{
+			leading=Jet(pt1,phi1,0,0);
+			subleading=Jet(pt2,phi2,0,0);
+		}
+		else{
+			subleading=Jet(pt1,phi1,0,0);
+			leading=Jet(pt2,phi2,0,0);
+		}
+		calculateR2J2();
+		makeJetDeltaPhi();
+	}
+	DiJet(bool f){
+		isDijet=f;
+	}
+	DiJet(){}
+
+	~DiJet(){}
+	Jet getleading(){
+		return leading;
+	}
+	Jet getsubleading(){
+		return subleading;
+	}
+	float getR2J2(){
+		return r2j2;
+	}
+	float getDeltaPhi(){
+		return jetDeltaPhi;
+	}
+	void operator=(DiJet d2){
+		isDijet=(bool)d2;
+		leading=d2.getleading();
+		subleading=d2.getsubleading();
+		jetDeltaPhi=d2.getDeltaPhi();
+	}
+	operator bool(){
+		return isDijet;
+	}
+private:
+	Jet leading;
+	Jet subleading;
+	float jetDeltaPhi;
+	float photonDeltaPhi;
+	float r2j2;
+	bool isDijet;
+
+	inline float deltaPhi(float i1, float i2){
+		float r = TMath::Abs(i1-i2);
+		if (r>TMath::Pi())
+		{
+			r= 2*TMath::Pi()-r;
+		}
+		return r;
+	}
+
+	inline float makeJetDeltaPhi(){
+		jetDeltaPhi = TMath::Abs(leading.getphi().value-subleading.getphi().value);
+		if (jetDeltaPhi>TMath::Pi())
+		{
+			jetDeltaPhi= 2*TMath::Pi()-jetDeltaPhi;
+		}
+		return jetDeltaPhi;
+	}
+
+	inline void calculateR2J2(){
+		r2j2 = (leading.getEnergy().value-subleading.getEnergy().value)/(leading.getEnergy().value+subleading.getEnergy().value);
+	}
+	
+};
+#endif
