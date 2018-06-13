@@ -441,6 +441,26 @@ class Scalar;
 		}
 		return v;
 	}
+	template<class T>
+	T bigger(T x, T y){
+		if (x>y)
+		{
+			return x;
+		}
+		else{
+			return y;
+		}
+	}
+	template<class T>
+	T smaller(T x, T y){
+		if (x<y)
+		{
+			return x;
+		}
+		else{
+			return y;
+		}
+	}
 	/* queues a-b inclusive are put into queue a and the other queues are removed */
 	template<class T>
 	queue<queue<T>> mergeQueues(queue<queue<T>> in, int a, int b){
@@ -1212,7 +1232,73 @@ float* uncertaintyArray(Scalar* a, int SIZE){
 	}
 	return r;
 }
-
+#ifndef Parton_h
+#define Parton_h
+#include "TLorentzVector.h"
+class Parton
+{
+public:
+	Parton(){}
+	~Parton(){}
+	Parton(int ID, float phi, float y){
+		quark=isQuark(ID);
+		this->phi=phi;
+		this->y=y;
+	}
+	Parton(int ID, float phi, float eta, float eT, float e){
+		quark=isQuark(ID);
+		TLorentzVector tlv;
+		tlv.SetPtEtaPhiE(eTTopT(eT,ID),eta,phi,e);
+		this->phi=phi;
+		y=tlv.Rapidity();
+		this->eta = eta;
+	}
+	float getphi(){
+		return phi;
+	}
+	float gety(){
+		return y;
+	}
+	float geteta(){
+		return eta;
+	}
+	bool getQuark(){
+		return quark;
+	}
+protected:
+	bool quark;
+	float phi;
+	float y;	
+	float eta;
+	bool isQuark(int ID){
+		return TMath::Abs(ID)>0&&TMath::Abs(ID)<9;
+	}
+	float eTTopT(float eT, int ID){
+		return TMath::Power(eT*eT-idToMass(ID)*idToMass(ID),.5);
+	}
+	float idToMass(int ID){
+		ID=TMath::Abs(ID);
+		switch(ID){
+			case 2: return 0.0022;
+				break;
+			case 1: return 0.0047;
+				break;
+			case 3: return 0.096;
+				break;
+			case 4: return 1.28;
+				break;
+			case 5: return 4.18;
+				break;
+			case 6: return 173;
+				break;
+			case 21: return 0;
+				break;
+			default: return -1;
+				break;
+		}
+	}
+};
+#endif
 #ifndef Jet_h
 #define Jet_h
 class Jet
@@ -1351,7 +1437,7 @@ private:
 	}
 	
 };
-
+#endif
 #ifndef DiJet_h
 #define DiJet_h
 class DiJet
@@ -1447,3 +1533,220 @@ private:
 	
 };
 #endif
+#ifndef myParticle_h
+#define myParticle_h
+class myParticle
+{
+public:
+	myParticle(){}
+	~myParticle(){}
+	myParticle(int id, float eT, float phi, float y){
+		this->id=id;
+		this->eT=eT;
+		this->phi=phi;
+		this->y=y;
+	}
+	int getId(){
+		return id;
+	}
+	float geteT(){
+		return eT;
+	}
+	float getphi(){
+		return phi;
+	}
+	float gety(){
+		return y;
+	}
+
+private:
+	int id;
+	float eT;
+	float phi;
+	float y;
+};
+#endif
+#ifndef Photon_h
+#define Photon_h
+class Photon
+{
+public:
+	Photon(){}
+	Photon(float _pT){
+		this->pT = Scalar(_pT);
+	}
+	Photon(float _pT,float _phi){
+		this->pT = Scalar(_pT);
+		this->phi= Scalar(_phi);
+	}
+	Photon(double _pT,double _phi){
+		this->pT = Scalar((float)_pT);
+		this->phi= Scalar((float)_phi);
+	}
+	Photon(double _pT,double _phi,bool process){
+		this->pT = Scalar((float)_pT);
+		this->phi= Scalar((float)_phi);
+		direct=process;
+	}
+	Photon(float _pT,float _phi, float _eta){
+		this->pT = Scalar(_pT);
+		this->phi= Scalar(_phi);
+		this->eta= Scalar(_eta);
+	}
+	Photon(double _pT,double _phi, double _eta){
+		this->pT = Scalar((float)_pT);
+		this->phi= Scalar((float)_phi);
+		this->eta= Scalar((float)_eta);
+	}
+	Photon(double _pT,double _phi, double _eta, bool process){
+		this->pT = Scalar((float)_pT);
+		this->phi= Scalar((float)_phi);
+		this->eta= Scalar((float)_eta);
+		direct=process;
+	}
+	Photon(double _pT,double _phi, double _eta, bool process, std::queue<myParticle> all){
+		this->pT = Scalar((float)_pT);
+		this->phi= Scalar((float)_phi);
+		this->eta= Scalar((float)_eta);
+		direct=process;
+		findIsoEt(all);
+	}
+	Photon(int index,double _pT,double _phi, double _eta, bool process, queue<myParticle> all){
+		this->pT = Scalar((float)_pT);
+		this->phi= Scalar((float)_phi);
+		this->eta= Scalar((float)_eta);
+		direct=process;
+		position=index;
+		findIsoEt(all);
+	}
+	Photon(double _pT,double _phi, double _eta,queue<myParticle> all){
+		this->pT = Scalar((float)_pT);
+		this->phi= Scalar((float)_phi);
+		this->eta= Scalar((float)_eta);
+		findIsoEt(all);
+	}
+	Photon(int SIZE, int position, float* eT, float* phi, float* eta, bool direct,float eTCone){
+		etCone=eTCone;
+		this->position=position;
+		pT=Scalar(eT[position]);
+		this->phi=Scalar(phi[position]);
+		this->eta=Scalar(eta[position]);
+		this->direct=direct;
+		findIsoEt(phi,eta,eT,SIZE);
+	}
+	Photon(int SIZE, int* id, float* eT, float* phi, float* eta, bool direct,float eTCone,float eTCut){
+		etCone=eTCone;
+		findPosition(SIZE,id,eT,eTCut);
+		pT=Scalar(eT[position]);
+		this->phi=Scalar(phi[position]);
+		this->eta=Scalar(eta[position]);
+		this->direct=direct;
+		findIsoEt(phi,eta,eT,SIZE);
+	}
+	~Photon(){}
+	Scalar getpT(){
+		return pT;
+	}
+	void setpT(float _pT){
+		this->pT = Scalar(_pT);
+	}
+	Scalar getphi(){
+		return phi;
+	}
+	void setphi(float _phi){
+		this->phi = Scalar(_phi);
+	}
+	Scalar geteta(){
+		return eta;
+	}
+	void seteta(float _eta){
+		this->eta = Scalar(_eta);
+	}
+	void setParton(Parton p){
+		parton=p;
+	}
+	bool isDirect(){
+		return direct;
+	}
+	int getPosition(){
+		return position;
+	}
+	float findIsoEt(queue<myParticle> all){
+		isoEt=0;
+		while(!all.empty()){
+			if (inCone(all.front().gety(),all.front().getphi()))
+			{
+				isoEt+=all.front().geteT();
+			}
+			all.pop();
+		}
+		return isoEt;
+	}
+
+	float getIsoEt(){
+		return isoEt;
+	}
+	
+	Point getAngle(){
+		Point r;
+		r.x=phi;
+		r.y=eta;
+		return r;
+	}
+
+private:
+	Scalar pT;
+	Scalar phi;
+	Scalar eta;
+	bool direct;
+	float isoEt;
+	Parton parton;
+	float etCone = 0.3;
+	int position;
+	bool inCone(float geta, float gphi)
+	{
+	  if( sqrt(TMath::Power(TMath::Abs(geta-eta.value),2)+TMath::Power(TMath::Abs(gphi-phi.value),2)) < etCone )
+	  {
+	    return true;
+	  }
+	  else
+	  {
+	    return false;
+	  }
+	}
+	float findIsoEt(float* phi, float* eta, float* eT, int SIZE){
+		isoEt=0;
+		for(int i=0;i<SIZE;i++){
+			if (inCone(eta[i],phi[i]))
+			{
+				isoEt+=eT[i];
+			}
+		}
+		isoEt-=pT.value; //take the photon out
+		return isoEt;
+	}
+	inline bool isPhoton(int id){
+		return id==22;
+	}
+	int findPosition(int SIZE, int* id, float* et,float eTCut){
+		for (int i = 0; i < SIZE; ++i)
+		{
+			if (isPhoton(id[i])&&et[i]>eTCut)
+			{
+				position=i;
+				return position;
+			}
+		}
+		return -1;
+	}
+};
+#endif
+
+inline float deltaPhi(float i1, float i2){
+	float r = TMath::Abs(i1-i2);
+	if (r>TMath::Pi())
+	{
+		r= 2*TMath::Pi()-r;
+	}
+	return r;
+}
