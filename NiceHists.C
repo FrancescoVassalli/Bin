@@ -5,9 +5,15 @@
 #include <iostream>
 class Scalar;
 
+namespace {
 	short colors[7]={kRed,kBlue,kGreen+2,kMagenta+3,kOrange+4,kCyan+1,kMagenta-7};
 	short styles[7]={kFullCircle,kOpenSquare,kFullTriangleUp,kFullDiamond,kFullCross,kFullStar,kOpenCircle};
-	
+	const char alphanum[] =
+"0123456789"
+"!@#$%^&*"
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+"abcdefghijklmnopqrstuvwxyz";
+	}
 	template<class T>
 	T* zeroArray(int n,T* type){
 		T* r = new T[n];
@@ -38,6 +44,14 @@ class Scalar;
 		for(int i=0; i<=nBins;++i){
 			bins[i] = min + width*i;
 		}
+	}
+	float* makeBins(float min, float max, float width, int* nBins){ //nBins can't be NULL
+		*nBins =(int)((max-min+.5)/width);
+		float *bins= new float[*nBins];
+		for(int i=0; i<= *nBins;++i){
+			bins[i] = min + width*i;
+		}
+		return bins;
 	}
 	template<class T>
 	void arrayMultiply(T *a, T* m,int SIZE){
@@ -83,6 +97,10 @@ class Scalar;
 			a[i] /=d;
 			//cout<<a[i]<<'\n';
 		}
+	}
+	template<class T>
+	bool inRange(T in, T low, T high){
+		return in>=low && in<=high;
 	}
 	template<class T>
 	void divideArray(int n, T* a, T* d){
@@ -679,7 +697,21 @@ class Scalar;
 		return r;
 
 	}
-
+	void recursiveGaus(TH1* h, TF1* gaus, float* data, float sigmadistance,int lazyMan=0){
+	    h->Fit(gaus,"","",data[0]-sigmadistance*data[1],data[0]+sigmadistance*data[1]);
+	    if(data[0]!=gaus->GetParameter(1)){
+	    	if(lazyMan == 100){return;}
+	        data[0] = gaus->GetParameter(1);
+	        data[1] = gaus->GetParameter(2);
+	        lazyMan++;
+	        recursiveGaus(h,gaus,data,sigmadistance,lazyMan);
+	    }
+	    else{
+	        data[0] = gaus->GetParameter(1);
+	        data[1] = gaus->GetParameter(2);
+	        return;
+	    }
+	}
 	/* note that SIZE will change to the size of the returned array*/
 	template<class T>
 	T* yAveragex(unsigned int* SIZE, T* y, T* x){
@@ -1604,6 +1636,14 @@ public:
 		this->eta= Scalar((float)_eta);
 		direct=process;
 	}
+	Photon(int position, float* eT, float* phi, float* eta, int* id,int SIZE){
+		etCone=.3;
+		this->position =position;
+		this->pT= Scalar(eT[position]);
+		this->phi = Scalar(phi[position]);
+		this->eta = Scalar(eta[position]);
+		findIsoEt(phi,eta,eT,id,SIZE);
+	}
 	Photon(double _pT,double _phi, double _eta, bool process, std::queue<myParticle> all){
 		this->pT = Scalar((float)_pT);
 		this->phi= Scalar((float)_phi);
@@ -1625,15 +1665,16 @@ public:
 		this->eta= Scalar((float)_eta);
 		findIsoEt(all);
 	}
-	Photon(int SIZE, int position, float* eT, float* phi, float* eta, bool direct,float eTCone){
+	//needs ID to find ISO 
+	/*Photon(int SIZE, int position, float* eT, float* phi, float* eta, bool direct,float eTCone){
 		etCone=eTCone;
 		this->position=position;
 		pT=Scalar(eT[position]);
 		this->phi=Scalar(phi[position]);
 		this->eta=Scalar(eta[position]);
 		this->direct=direct;
-		findIsoEt(phi,eta,eT,SIZE);
-	}
+		findIsoEt(phi,eta,eT,id,SIZE);
+	}*/
 	Photon(int SIZE, int* id, float* eT, float* phi, float* eta, bool direct,float eTCone,float eTCut){
 		etCone=eTCone;
 		findPosition(SIZE,id,eT,eTCut);
@@ -1641,7 +1682,7 @@ public:
 		this->phi=Scalar(phi[position]);
 		this->eta=Scalar(eta[position]);
 		this->direct=direct;
-		findIsoEt(phi,eta,eT,SIZE);
+		findIsoEt(phi,eta,eT,id,SIZE);
 	}
 	~Photon(){}
 	Scalar getpT(){
@@ -1703,9 +1744,9 @@ private:
 	Parton parton;
 	float etCone = 0.3;
 	int position;
-	bool inCone(float geta, float gphi)
+	inline bool inCone(float geta, float gphi)
 	{
-	  if( sqrt(TMath::Power(TMath::Abs(geta-eta.value),2)+TMath::Power(TMath::Abs(gphi-phi.value),2)) < etCone )
+	  if( sqrt(TMath::Power(TMath::Abs(geta-eta.value),2)+TMath::Power(deltaPhi(gphi,phi.value),2)) < etCone )
 	  {
 	    return true;
 	  }
@@ -1714,10 +1755,14 @@ private:
 	    return false;
 	  }
 	}
-	float findIsoEt(float* phi, float* eta, float* eT, int SIZE){
+	inline bool inCone(float geta, float gphi, int id)
+	{
+	  return (TMath::Power((TMath::Power(TMath::Abs(geta-eta.value),2)+TMath::Power(deltaPhi(gphi,phi.value),2)),.5) < etCone );
+	}
+	float findIsoEt(float* phi, float* eta, float* eT, int* id, int SIZE){
 		isoEt=0;
 		for(int i=0;i<SIZE;i++){
-			if (inCone(eta[i],phi[i]))
+			if (inCone(eta[i],phi[i],id[i]))
 			{
 				isoEt+=eT[i];
 			}
@@ -1739,6 +1784,14 @@ private:
 		}
 		return -1;
 	}
+	inline float deltaPhi(float i1, float i2){
+		float r = TMath::Abs(i1-i2);
+		if (r>TMath::Pi())
+		{
+			r= 2*TMath::Pi()-r;
+		}
+		return r;
+	}
 };
 #endif
 
@@ -1750,3 +1803,126 @@ inline float deltaPhi(float i1, float i2){
 	}
 	return r;
 }
+
+char genRandomChar()  // Random char generator function.
+{
+    return alphanum[rand() % 69];
+}
+
+string randomString(){
+	std::string Str;
+	for(unsigned int i = 0; i < 21; ++i)
+	{
+	    Str += genRandomChar();
+	}
+	return Str;
+}
+
+queue<TH1D*> makeYProjections(TH2F* data, int* binsTodivide, int NHISTS,int* plotcount){ //turns the TH2F into NHISTS TH1F by spliting on the binsTodivide provide upper and lower bin
+	queue<TH1D*> r;
+	TH1D* temp; 
+	for (int i = 0; i < NHISTS; ++i)
+	{
+		temp = data->ProjectionY(getNextPlotName(plotcount).c_str(),binsTodivide[i],binsTodivide[i+1],"e");
+		r.push(temp);
+	}
+	return r;
+}
+
+void drawTemp(TH1* plot){
+	TCanvas *tc = new TCanvas();
+	plot->Draw();
+}
+
+int* getBinsFromValues(TH1* data, bool xaxis,float* values, int SIZE){
+	int *bins = new int[SIZE];
+	cout<<"Bins:";
+	for (int i = 0; i < SIZE; ++i)
+	{
+		if (xaxis)
+		{
+			bins[i]=data->GetXaxis()->FindBin(values[i]);
+		}
+		else{
+			bins[i]=data->GetYaxis()->FindBin(values[i]);
+		}
+		cout<<values[i]<<":"<<bins[i]<<'\n';
+	}
+	return bins;
+}
+
+Scalar getResolution(TH1* plot){
+	TF1 *fit = new TF1(randomString().c_str(),"gaus",plot->GetBinContent(1),plot->GetBinContent(plot->GetNbinsX()));
+	//plot->Scale(1/plot->Integral());
+	plot->Fit(fit);
+	float gausData[2];
+	gausData[0]= fit->GetParameter(1);
+	gausData[1]= fit->GetParameter(2);
+	recursiveGaus(plot,fit,gausData,1.5,90);
+	Scalar mean(gausData[0],fit->GetParError(1));
+	Scalar sigma(gausData[1],fit->GetParError(2));
+	//ssanl<<"Mean:"<<gausData[0]<<", "<<gausData[1]<<"="<<gausData[1]/gausData[0]<<'\n';
+	return sigma/mean;
+}
+
+void plotWithGaus(TH1* plot){
+	TCanvas *tc =new TCanvas();
+	TF1 *fit = new TF1(randomString().c_str(),"gaus",plot->GetBinContent(1),plot->GetBinContent(plot->GetNbinsX()));
+	plot->Scale(1/plot->Integral());
+	plot->Fit(fit);
+	float gausData[2];
+	gausData[0]= fit->GetParameter(1);
+	gausData[1]= fit->GetParameter(2);
+	recursiveGaus(plot,fit,gausData,1.5,90);
+	string sigma = "#sigma:"+to_string(gausData[1]);
+	plot->Draw();
+	fit->SetRange(gausData[0]-gausData[1],0,gausData[0]+gausData[1],1);
+	fit->Draw("same");
+	//myText(.2,.3,kBlack,sigma.c_str()); //need to change the build order in root
+}
+
+/*
+class multiTH1F
+{
+public:
+	multiTH1F(){}
+	~multiTH1F(){}
+	multiTH1F(float max, float min, float plotwidth, int Nbins){
+		Nplots = (max-min)/plotwidth;
+		for (int i = 0; i < Nplots; ++i)
+		{
+			v.push_back(new TH1F(getNextPlotName(&plotCount).c_str(),"",Nbins,min+i*plotwidth,min+(i+1)*plotwidth));
+			plotmins.push_back(min+i*plotmins);
+		}
+	}
+	void fill(float in){
+		v[getPlotN(in)]->Fill(in);
+	}
+	void normalize(){
+		for (std::vector<TH1F*>::iterator i = v.begin(); i != v.end(); ++i)
+		{
+			(*i)->Scale(1/(*i)->Integral());
+		}
+	}
+	void plot(){
+		TCanvas* tc= new TCanvas();
+		tc->Divide((int)(v.size()+1)/2,2);
+	}
+
+private:
+	std::vector<TH1F*> v;
+	int Nplots;
+	std::vector<float> plotmins;
+	int getPlotN(float in){
+		if (in<plotmins[0]||in>*plotmins.back())
+		{
+			return -1;
+		}
+		int i=1;
+		while(in>plotmins[i]){
+			i++;
+		}
+		return i;
+	}
+	
+};*/
