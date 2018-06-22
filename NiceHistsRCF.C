@@ -3,6 +3,9 @@
 #include <limits.h>
 #include <queue>
 #include <iostream>
+
+std::cout<<"Loading Nicehists"<<std::endl;
+
 class Scalar;
 
 namespace {
