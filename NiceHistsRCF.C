@@ -4,7 +4,8 @@
 #include <queue>
 #include <iostream>
 
-std::cout<<"Loading Nicehists"<<std::endl;
+using namespace std;
+cout<<"Loading Nicehists"<<endl;
 
 class Scalar;
 
