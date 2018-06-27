@@ -844,6 +844,12 @@ public:
 	bool operator==(float s){
 		return value==s;
 	}
+	bool operator!=(float s){
+		return value!=s;
+	}
+	bool operator!=(double s){
+		return value!= (float) s;
+	}
 	bool operator>(Scalar s){
 		return value>s.value;
 	}
@@ -873,6 +879,16 @@ public:
 		Scalar next;
 		next.value = value*s;
 		next.uncertainty = (value*s)*uncertainty/value;
+		if (value==0||s==0)
+		{
+			next.uncertainty=0;
+		}
+		return next;
+	}
+	Scalar operator*(double s){
+		Scalar next;
+		next.value = value*(float)s;
+		next.uncertainty = (value*(float)s)*uncertainty/value;
 		if (value==0||s==0)
 		{
 			next.uncertainty=0;
