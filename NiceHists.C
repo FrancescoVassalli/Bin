@@ -613,6 +613,14 @@ namespace {
 		}
 		return temp;
 	}
+	/*template<class T>
+	T min(T t1, T t2){
+		if (t1<t2)
+		{
+			return t1;
+		}
+		else return t2;
+	}*/
 	template<class T>
 	T average(int SIZE, T* x){
 		T sum=0;
@@ -1896,6 +1904,53 @@ void plotWithGaus(TH1* plot){
 	fit->Draw("same");
 	//myText(.2,.3,kBlack,sigma.c_str()); //need to change the build order in root
 }
+
+class PlotWithLine
+{
+public:
+	virtual void Draw(){
+		main->Draw();
+	}
+	~PlotWithLine(){
+		delete main;
+	}
+protected:
+	TH1 *main;
+	
+};
+
+class CutPlot :public PlotWithLine{
+public:
+	CutPlot(TH1 *main, TLine* cut) : cut(cut){
+		this->main = main;
+	}
+	~CutPlot(){
+		delete cut;
+	}
+	void Draw(){
+		main->Draw();
+		cut->Draw("same");
+	}
+private:
+	TLine *cut;
+};
+
+class GausPlot :public PlotWithLine
+{
+public:
+	GausPlot(TH1* main, TF1* gaus) : gaus(gaus){
+		this->main = main;
+	}
+	~GausPlot(){
+		delete gaus;
+	}
+	void Draw(){
+		main->Draw();
+		gaus->Draw("same");
+	}
+private:
+	TF1 *gaus;
+};
 
 /*
 class multiTH1F
