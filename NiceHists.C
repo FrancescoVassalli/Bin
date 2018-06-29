@@ -937,12 +937,14 @@ public:
 		uncertainty = 1/(uncertainty*uncertainty)+1/(in.uncertainty*in.uncertainty);
 		value/=uncertainty;
 		uncertainty=temp;
+		return *this;
 	}
 	Scalar totalaverage(queue<Scalar> ins){
 		while(!ins.empty()){
 			this->runningAverage(ins.front());
 			ins.pop();
 		}
+		return *this;
 	}
 	operator float(){return value;}
 	operator double(){return (double) value;}
