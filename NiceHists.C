@@ -931,6 +931,19 @@ public:
 		r.uncertainty = uncertainty/(value*TMath::Log(base));
 		return r;
 	}
+	Scalar runningAverage(Scalar in){
+		float temp = (*this+in).uncertainty;
+		value =value/(uncertainty*uncertainty)+in.value/(in.uncertainty*in.uncertainty);
+		uncertainty = 1/(uncertainty*uncertainty)+1/(in.uncertainty*in.uncertainty);
+		value/=uncertainty;
+		uncertainty=temp;
+	}
+	Scalar totalaverage(queue<Scalar> ins){
+		while(!ins.empty()){
+			this->runningAverage(ins.front());
+			ins.pop();
+		}
+	}
 	operator float(){return value;}
 	operator double(){return (double) value;}
 	friend std::ostream& operator<<(std::ostream& os, Scalar const & tc) {
@@ -1911,8 +1924,7 @@ public:
 	virtual void Draw(){
 		main->Draw();
 	}
-	~PlotWithLine(){
-		delete main;
+	~PlotWithLine(){ // there might be some mem leakage here 
 	}
 protected:
 	TH1 *main;
@@ -1922,10 +1934,11 @@ protected:
 class CutPlot :public PlotWithLine{
 public:
 	CutPlot(TH1 *main, TLine* cut) : cut(cut){
-		this->main = main;
+		this->main  = main;
 	}
 	~CutPlot(){
 		delete cut;
+		cut=NULL;
 	}
 	void Draw(){
 		main->Draw();
@@ -1939,10 +1952,11 @@ class GausPlot :public PlotWithLine
 {
 public:
 	GausPlot(TH1* main, TF1* gaus) : gaus(gaus){
-		this->main = main;
+		this->main  = main;
 	}
 	~GausPlot(){
 		delete gaus;
+		gaus=NULL;
 	}
 	void Draw(){
 		main->Draw();
