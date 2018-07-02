@@ -171,12 +171,12 @@ namespace {
 			h++;
 		}
 	}
-	void makeDifferent(TH1F* h, int i){
+	void makeDifferent(TH1* h, int i){
 		h->SetLineColor(colors[i]);
 		h->SetMarkerStyle(styles[i]);
 		h->SetMarkerColor(colors[i]);
 	}
-	void makeDifferent(TEfficiency* h, int i){
+	void makeDifferent(TGraph* h, int i){
 		h->SetLineColor(colors[i]);
 		h->SetMarkerStyle(styles[i]);
 		h->SetMarkerColor(colors[i]);
@@ -931,20 +931,19 @@ public:
 		r.uncertainty = uncertainty/(value*TMath::Log(base));
 		return r;
 	}
-	Scalar runningAverage(Scalar in){
-		float temp = (*this+in).uncertainty;
-		value =value/(uncertainty*uncertainty)+in.value/(in.uncertainty*in.uncertainty);
-		uncertainty = 1/(uncertainty*uncertainty)+1/(in.uncertainty*in.uncertainty);
-		value/=uncertainty;
-		uncertainty=temp;
-		return *this;
-	}
+
 	Scalar totalaverage(queue<Scalar> ins){
+		Scalar temp=0;
+		float numerator=0;
+		float denominator=0;
 		while(!ins.empty()){
-			this->runningAverage(ins.front());
+			temp+=ins.front();
+			numerator+=ins.front().value/(ins.front().uncertainty*ins.front().uncertainty);
+			denominator+=1/(ins.front().uncertainty*ins.front().uncertainty);
 			ins.pop();
 		}
-		return *this;
+		temp.value=numerator/denominator;
+		return temp;
 	}
 	operator float(){return value;}
 	operator double(){return (double) value;}
@@ -1953,7 +1952,7 @@ private:
 class GausPlot :public PlotWithLine
 {
 public:
-	GausPlot(TH1* main, TF1* gaus) : gaus(gaus){
+	GausPlot(TH1* main, TF1* gaus,double lowBound,double upBound) : gaus(gaus),lowBound(lowBound), upBound(upBound){
 		this->main  = main;
 	}
 	~GausPlot(){
@@ -1964,8 +1963,14 @@ public:
 		main->Draw();
 		gaus->Draw("same");
 	}
+	double getUpBound(){
+		return upBound;
+	}
+
 private:
 	TF1 *gaus;
+	double lowBound;
+	double upBound;
 };
 
 /*
