@@ -23,6 +23,14 @@ namespace {
 		}
 		return r;
 	}
+	float* zeroArray(int n){
+		float* r = new float[n];
+		for (int i = 0; i < n; ++i)
+		{
+			r[i] = 0;
+		}
+		return r;
+	}
 	template<class T>
 	T* clone(T* a,int SIZE){
 		T* r = new T[SIZE];
@@ -163,6 +171,10 @@ namespace {
 	void gNice(){
 		gStyle->SetOptStat(0);
 		gStyle->SetErrorX(0);
+	}
+	void fixOffset(TH1* plot){
+		plot->GetYaxis()->SetTitleOffset(1);
+		plot->GetXaxis()->SetTitleOffset(1);
 	}
 	void makeLineColors(TH1F** h, int n){
 		for (int i = 1; i < n; ++i)
@@ -706,7 +718,7 @@ namespace {
 
 	}
 	void recursiveGaus(TH1* h, TF1* gaus, float* data, float sigmadistance,int lazyMan=0){
-	    h->Fit(gaus,"","",data[0]-sigmadistance*data[1],data[0]+sigmadistance*data[1]);
+	    h->Fit(gaus,"Q0","",data[0]-sigmadistance*data[1],data[0]+sigmadistance*data[1]);
 	    if(data[0]!=gaus->GetParameter(1)){
 	    	if(lazyMan == 100){return;}
 	        data[0] = gaus->GetParameter(1);
@@ -1188,6 +1200,11 @@ struct Point
 {
 	Scalar x;
 	Scalar y;
+	Point (Scalar _x, Scalar _y){
+		x=_x;
+		y=_y;
+	}
+	Point(){}
 };
 #endif
 
@@ -1196,6 +1213,11 @@ struct Pair
 {
 	T x;
 	T y;
+	Pair();
+	Pair(T _x, T _y){
+		x=_x;
+		y=_y;
+	}
 };
 
 //probably memory leaks 
@@ -1663,6 +1685,12 @@ public:
 		this->phi= Scalar(_phi);
 		this->eta= Scalar(_eta);
 	}
+	Photon(int position,float _pT,float _phi, float _eta){
+		this->pT = Scalar(_pT);
+		this->phi= Scalar(_phi);
+		this->eta= Scalar(_eta);
+		this->position=position;
+	}
 	Photon(double _pT,double _phi, double _eta){
 		this->pT = Scalar((float)_pT);
 		this->phi= Scalar((float)_phi);
@@ -1689,12 +1717,12 @@ public:
 		direct=process;
 		findIsoEt(all);
 	}
-	Photon(int index,double _pT,double _phi, double _eta, bool process, queue<myParticle> all){
+	Photon(int position,double _pT,double _phi, double _eta, bool process, queue<myParticle> all){
 		this->pT = Scalar((float)_pT);
 		this->phi= Scalar((float)_phi);
 		this->eta= Scalar((float)_eta);
 		direct=process;
-		position=index;
+		this->position=position;
 		findIsoEt(all);
 	}
 	Photon(double _pT,double _phi, double _eta,queue<myParticle> all){
@@ -1722,20 +1750,31 @@ public:
 		this->direct=direct;
 		findIsoEt(phi,eta,eT,id,SIZE);
 	}
+	Photon(TLorentzVector tlv){
+		pT=(float)tlv.Pt();
+		eta=(float)tlv.Eta();
+		phi=(float)tlv.Phi();
+	}
+	Photon(TLorentzVector tlv,int position){
+		pT=(float)tlv.Pt();
+		eta=(float)tlv.Eta();
+		phi=(float)tlv.Phi();
+		this->position=position;
+	}
 	~Photon(){}
-	Scalar getpT(){
+	Scalar getpT()const {
 		return pT;
 	}
 	void setpT(float _pT){
 		this->pT = Scalar(_pT);
 	}
-	Scalar getphi(){
+	Scalar getphi()const {
 		return phi;
 	}
 	void setphi(float _phi){
 		this->phi = Scalar(_phi);
 	}
-	Scalar geteta(){
+	Scalar geteta()const{
 		return eta;
 	}
 	void seteta(float _eta){
@@ -1744,10 +1783,10 @@ public:
 	void setParton(Parton p){
 		parton=p;
 	}
-	bool isDirect(){
+	bool isDirect()const{
 		return direct;
 	}
-	int getPosition(){
+	int getPosition()const{
 		return position;
 	}
 	float findIsoEt(queue<myParticle> all){
@@ -1762,15 +1801,21 @@ public:
 		return isoEt;
 	}
 
-	float getIsoEt(){
+	float getIsoEt()const{
 		return isoEt;
 	}
 	
-	Point getAngle(){
+	Point getAngle()const{
 		Point r;
 		r.x=phi;
 		r.y=eta;
 		return r;
+	}
+	inline float deltaR(float geta, float gphi)const{
+	  return TMath::Power((TMath::Power(TMath::Abs(geta-eta.value),2)+TMath::Power(deltaPhi(gphi,phi.value),2)),.5);
+	}
+	inline float deltaR(Photon p)const{	
+	  return TMath::Power((TMath::Power(TMath::Abs(p.geteta().value-eta.value),2)+TMath::Power(deltaPhi(p.getphi().value,phi.value),2)),.5);
 	}
 
 private:
@@ -1782,7 +1827,7 @@ private:
 	Parton parton;
 	float etCone = 0.3;
 	int position;
-	inline bool inCone(float geta, float gphi)
+	inline bool inCone(float geta, float gphi) const
 	{
 	  if( sqrt(TMath::Power(TMath::Abs(geta-eta.value),2)+TMath::Power(deltaPhi(gphi,phi.value),2)) < etCone )
 	  {
@@ -1793,7 +1838,7 @@ private:
 	    return false;
 	  }
 	}
-	inline bool inCone(float geta, float gphi, int id)
+	inline bool inCone(float geta, float gphi, int id) const
 	{
 	  return (TMath::Power((TMath::Power(TMath::Abs(geta-eta.value),2)+TMath::Power(deltaPhi(gphi,phi.value),2)),.5) < etCone );
 	}
@@ -1808,7 +1853,7 @@ private:
 		isoEt-=pT.value; //take the photon out
 		return isoEt;
 	}
-	inline bool isPhoton(int id){
+	inline bool isPhoton(int id)const {
 		return id==22;
 	}
 	int findPosition(int SIZE, int* id, float* et,float eTCut){
@@ -1822,7 +1867,7 @@ private:
 		}
 		return -1;
 	}
-	inline float deltaPhi(float i1, float i2){
+	inline float deltaPhi(float i1, float i2)const{
 		float r = TMath::Abs(i1-i2);
 		if (r>TMath::Pi())
 		{
@@ -1907,14 +1952,14 @@ void plotWithGaus(TH1* plot){
 	TCanvas *tc =new TCanvas();
 	TF1 *fit = new TF1(randomString().c_str(),"gaus",plot->GetBinContent(1),plot->GetBinContent(plot->GetNbinsX()));
 	plot->Scale(1/plot->Integral());
-	plot->Fit(fit);
+	plot->Fit(fit,"Q0");
 	float gausData[2];
 	gausData[0]= fit->GetParameter(1);
 	gausData[1]= fit->GetParameter(2);
 	recursiveGaus(plot,fit,gausData,1.5,90);
 	string sigma = "#sigma:"+to_string(gausData[1]);
 	plot->Draw();
-	fit->SetRange(gausData[0]-gausData[1],0,gausData[0]+gausData[1],1);
+	fit->SetRange(gausData[0]-5*gausData[1],0,gausData[0]+5*gausData[1],1);
 	fit->Draw("same");
 	//myText(.2,.3,kBlack,sigma.c_str()); //need to change the build order in root
 }
@@ -1972,6 +2017,85 @@ private:
 	double lowBound;
 	double upBound;
 };
+
+struct Poly2
+{
+	Scalar c;
+	Scalar b;
+	Scalar a;
+	Poly2(Scalar _a, Scalar _b, Scalar _c){
+		c=_c;
+		b=_b;
+		a=_a;
+	}
+	Poly2(){};
+};
+
+#ifndef Cluster_h
+#define Cluster_h 
+
+class Cluster
+{
+public:
+	Cluster(){}
+	Cluster(float pT,float phi, float eta){
+		this->pT = pT;
+		this->phi = phi;
+		this->eta =eta;
+	}
+	Cluster(float pT,float phi, float eta, int index){
+		this->pT = pT;
+		this->phi = phi;
+		this->eta =eta;
+		this->index = index;
+
+	}
+	~Cluster(){}
+	float setdR(float phi,float eta){
+		dR =TMath::Power((TMath::Power(TMath::Abs(eta-this->eta),2)+TMath::Power(deltaPhi(this->phi,phi),2)),.5);
+	  	return dR;
+	}
+	float getdR(){
+		return dR;
+	}
+	float getpT(){
+		return pT;
+	}
+	float geteta(){
+		return eta;
+	}
+	int getIndex(){
+		return index;
+	}
+private:
+	float phi;
+	float eta;
+	float dR;
+	float pT;
+	int index;
+	inline float deltaPhi(float i1, float i2){
+		float r = TMath::Abs(i1-i2);
+		if (r>TMath::Pi())
+		{
+			r= 2*TMath::Pi()-r;
+		}
+		return r;
+	}
+	
+};
+#endif
+
+inline float deltaR(float e1, float p1, float e2, float p2){
+	  return TMath::Power(TMath::Power(TMath::Abs(e1-e2),2)+TMath::Power(deltaPhi(p1,p2),2),.5);
+}
+
+inline float pToE(float x, float y, float z, float mass){
+	return quadrature((float)quadrature(x,y),quadrature(z,mass));
+}
+
+inline float pToE(TVector3 v, float mass){
+	return quadrature((float) quadrature(v.x(),v.y()),(float) quadrature((float)v.z(),mass));
+}
 
 /*
 class multiTH1F
