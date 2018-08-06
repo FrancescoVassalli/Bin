@@ -1,0 +1,5 @@
+AC_INIT([Scalar], [1.0])
+AM_INIT_AUTOMAKE
+AC_PROG_CXX(CC g++)
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
