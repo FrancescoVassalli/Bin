@@ -1,5 +1,9 @@
 #ifndef Scalar_h
 #define Scalar_h
+
+#include <iostream>
+#include <TMath.h>
+
 class Scalar
 {
 public:
@@ -35,7 +39,7 @@ public:
 		return Scalar(this->value+s);
 	}
 	Scalar operator-(Scalar s);
-	inline inline Scalar operator-(float s){
+	inline Scalar operator-(float s){
 		return Scalar(this->value-s);
 	}
 	inline void operator=(Scalar s){
