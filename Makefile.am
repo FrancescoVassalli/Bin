@@ -8,6 +8,7 @@ lib_LTLIBRARIES = \
 	libfrootutils.la
 include_HEADERS = \
 	Scalar.h\
+	Math.C\
 	ScalarLinkDef.h\
 	Photon.h\
 	PhotonLinkDef.h
