@@ -1,20 +1,17 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 INCLUDES= \
-	-I$(includedir)\
-	-I m4\
-	-I$(OFFLINE_MAIN)/include \
 	-I`root-config --incdir`
 libfrootutils_la_LDFLAGS =\
-	-L$(libdir)\
-  -L$(OFFLINE_MAIN)/lib \
 	`root-config --libs`
 lib_LTLIBRARIES = \
 	libfrootutils.la
+include_HEADERS = \
+	Scalar.h\
+	Photon.h
+
 libfrootutils_la_SOURCES = \
 	Scalar.cc\
-	Scalar.h\
-	Photon.h\
 	Photon_Dict.C\
 	Scalar_Dict.C
 
@@ -25,7 +22,7 @@ noinst_PROGRAMS = \
 	testexternals
 
 testexternals_LDADD = \
-	libclusteriso.la
+	libfrootutils.la
 
 testexternals.C:
 	echo "//*** this is a generated file. Do not commit, do not edit" > $@
