@@ -8,7 +8,9 @@ lib_LTLIBRARIES = \
 	libfrootutils.la
 include_HEADERS = \
 	Scalar.h\
-	Photon.h
+	ScalarLinkDef.h\
+	Photon.h\
+	PhotonLinkDef.h
 
 libfrootutils_la_SOURCES = \
 	Scalar.cc\
